@@ -62,3 +62,5 @@ target/
 *.iml
 
 .idea/workspace.xml
+
+*.xml
