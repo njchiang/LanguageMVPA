@@ -7,6 +7,7 @@ from mvpa2.suite import *
 import os
 
 projectDir="Z:\\fmri\\LanguageMVPA"
+codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
 mask="grayMatter"
 constrasts=["verb", "syntax", "anim", "stimtype"]
 con="anim"
@@ -28,20 +29,17 @@ attr=SampleAttributes(os.path.join(labelPath, (con+"_attribute_labels.txt")))
 
 
 for i in range(0, len(subList)):
-	sub=subList[i]
-	print sub
-	bSeriesName=str(sub + "_LSA_Series.nii.gz")
-	maskName=str(sub+"_"+mask+".nii.gz")
+    sub=subList[i]
+    print sub
+    bSeriesName=str(sub + "_LSA_Series.nii.gz")
+    maskName=str(sub+"_"+mask+".nii.gz")
+    bSeries=os.path.join(betaPath, bSeriesName)
+    maskFile=os.path.join(maskPath, maskName)
+    allFds=fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
+    lFds=allFds[0:32,:]
+    zscore(lFds, chunks_attr=None)
+    lRes=sl(lFds)
+    sphere_accs = lRes.samples[0]
+    map2nifti(lFds, sphere_accs).to_filename(os.path.join(outPath, sub+'_' + con + 'sl.nii.gz'))
 
-	bSeries=os.path.join(betaPath, bSeriesName)
-	maskFile=os.path.join(maskPath, maskName)
-	
-	allFds=fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
-	lFds=allFds[0:32,:]
-	zscore(lFds, chunks_attr=None)
-	lRes=sl(lFds)
-	sphere_accs = lRes.samples[0]
-	map2nifti(lFds, sphere_accs).to_filename(os.path.join(outPath, sub+'_' + con + 'sl.nii.gz'))
-
-	
 
