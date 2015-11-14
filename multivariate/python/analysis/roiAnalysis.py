@@ -29,7 +29,7 @@ cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == 
 langAcc = np.zeros(len(subList))
 picAcc = np.zeros(len(subList))
 cv_attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
-cross_attr = SampleAttributes(os.path.join(labelPath, ("cross_"+con+"_attribute_labels.txt")))
+# cross_attr = SampleAttributes(os.path.join(labelPath, ("cross_"+con+"_attribute_labels.txt")))
 for i in range(0, len(subList)):
     sub = subList[i]
     print sub
