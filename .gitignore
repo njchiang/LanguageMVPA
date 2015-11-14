@@ -61,6 +61,8 @@ target/
 *.xml
 *.iml
 
+# User-specific stuff:
 .idea/workspace.xml
-
-*.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/shelf
