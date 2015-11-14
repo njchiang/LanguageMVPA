@@ -60,3 +60,7 @@ target/
 .idea/
 *.xml
 *.iml
+
+.idea/workspace.xml
+
+*.xml
