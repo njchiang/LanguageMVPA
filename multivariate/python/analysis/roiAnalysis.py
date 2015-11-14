@@ -2,7 +2,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # configure for windows
-
+# test test test
 from mvpa2.suite import *
 import os
 
@@ -29,7 +29,7 @@ cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == 
 langAcc = np.zeros(len(subList))
 picAcc = np.zeros(len(subList))
 cv_attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
-cross_attr = SampleAttributes(os.path.join(labelPath, ("cross_"+con+"_attribute_labels.txt")))
+# cross_attr = SampleAttributes(os.path.join(labelPath, ("cross_"+con+"_attribute_labels.txt")))
 for i in range(0, len(subList)):
     sub = subList[i]
     print sub
@@ -40,12 +40,16 @@ for i in range(0, len(subList)):
     print "loading files..."
     allFds = fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile)
     lFds = allFds[0:32,:]
-    lResults = cv(lFds)
+    # inanimLFds=lFds[0:16,:]
+    animLFds=lFds[16:32,:]
+    lResults = cv(animLFds)
     print np.round(cv.ca.stats.stats['ACC%'], 1)
     print cv.ca.stats.matrix
     langAcc[i] = np.round(cv.ca.stats.stats['ACC%'], 1)
     pFds = allFds[32:64,:]
-    pResults = cv(pFds)
+    # inanimLFds=lFds[0:16,:]
+    animPFds=lFds[16:32,:]
+    pResults = cv(animPFds)
     print np.round(cv.ca.stats.stats['ACC%'], 1)
     print cv.ca.stats.matrix
     picAcc[i] = np.round(cv.ca.stats.stats['ACC%'], 1)
