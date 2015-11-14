@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a9aa9931-9f4e-4d23-8cb5-065df9050645" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/LanguageMVPA.iml" afterPath="$PROJECT_DIR$/.idea/LanguageMVPA.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="a9aa9931-9f4e-4d23-8cb5-065df9050645" name="Default" comment="" />
     <ignored path="LanguageMVPA.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,8 +36,8 @@
       <file leaf-file-name="roiAnalysis.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/multivariate/python/analysis/roiAnalysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.64044946">
-              <caret line="19" column="50" selection-start-line="19" selection-start-column="50" selection-end-line="19" selection-end-column="50" />
+            <state vertical-scroll-proportion="0.505618">
+              <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
               <folding>
                 <element signature="e#177#202#0" expanded="true" />
               </folding>
@@ -524,8 +520,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/multivariate/python/analysis/roiAnalysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.64044946">
-          <caret line="19" column="50" selection-start-line="19" selection-start-column="50" selection-end-line="19" selection-end-column="50" />
+        <state vertical-scroll-proportion="0.505618">
+          <caret line="15" column="24" selection-start-line="15" selection-start-column="24" selection-end-line="15" selection-end-column="24" />
           <folding>
             <element signature="e#177#202#0" expanded="true" />
           </folding>
