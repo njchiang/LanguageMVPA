@@ -57,6 +57,11 @@ docs/_build/
 target/
 
 #PyCharm
+.idea/
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/.name
+.idea/misc.xml
 .idea/LanguageMVPA.iml
 .idea/tasks.xml
 .idea/dictionaries
