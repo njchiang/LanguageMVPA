@@ -40,12 +40,16 @@ for i in range(0, len(subList)):
     print "loading files..."
     allFds = fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile)
     lFds = allFds[0:32,:]
-    lResults = cv(lFds)
+    # inanimLFds=lFds[0:16,:]
+    animLFds=lFds[16:32,:]
+    lResults = cv(animLFds)
     print np.round(cv.ca.stats.stats['ACC%'], 1)
     print cv.ca.stats.matrix
     langAcc[i] = np.round(cv.ca.stats.stats['ACC%'], 1)
     pFds = allFds[32:64,:]
-    pResults = cv(pFds)
+    # inanimLFds=lFds[0:16,:]
+    animPFds=lFds[16:32,:]
+    pResults = cv(animPFds)
     print np.round(cv.ca.stats.stats['ACC%'], 1)
     print cv.ca.stats.matrix
     picAcc[i] = np.round(cv.ca.stats.stats['ACC%'], 1)
