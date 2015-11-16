@@ -20,11 +20,11 @@ outPath = os.path.join(projectDir, "Maps")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+subList = ["LMVPA001"] #, "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
+#           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 maskList = ["left_IFG_operc", "IFG_triang", "STG_post", "grayMatter"]
 mask = maskList[0]
-con = contrasts[7]
+con = contrasts[0]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -37,8 +37,8 @@ clf = LinearNuSVMC()
 cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
 # 9mm radius searchlight
 # sl = sphere_searchlight(cv, radius=4, postproc=mean_sample())
-searchlight = sphere_searchlight(cv, radius=4)
-attr = SampleAttributes(os.path.join(labelPath, (con+"_attribute_labels.txt")))
+cvSL = sphere_searchlight(cv, radius=4)
+attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
 
 # make sure everything is okay.
 configMessage = "Searchlight type: " + slType \
@@ -55,28 +55,13 @@ if cont != 'y':
 else:
     print "Running searchlight analysis... "
 
+# def run_cv_sl(threadName, sl, ds):
 
-class CVThread(threading.Thread):
-    def __init__(self, threadID, name, sl, ds):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.sl = sl
-        self.ds = ds
-
-    def run(self):
-        print "Starting " + self.name
-        run_cv_sl(self.name, self.sl, self.ds)
-        print "Exiting " + self.name
-
-
-def run_cv_sl(threadName, sl, ds):
+def run_cv_sl(sl, ds, t):
     res = sl(ds)
     sphere_accs = res.samples[0]
-    map2nifti(ds, sphere_accs).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + 'cvsl.nii.gz'))
+    map2nifti(ds, sphere_accs).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
 
-
-# don't need multithreading for CC
 def run_cc_sl(sl, ds):
     res = sl(ds)
     l2p = res.samples[0]
@@ -97,17 +82,38 @@ for i in range(0, len(subList)):
 
     if slInt == 1:
         lFds = allFds[0:32, :]
+        zscore(lFds)
+        run_cv_sl(cvSL, lFds, 'lang')
         pFds = allFds[32:64, :]
-        thread1 = CVThread(1, "Thread-1", searchlight, lFds)
-        thread2 = CVThread(2, "Thread-2", searchlight, pFds)
-        thread1.start()
-        thread2.start()
+        zscore(pFds)
+        run_cv_sl(cvSL, pFds, 'pic')
+
     elif slInt == 0:
         zscore(allFds)
-        run_cc_sl(searchlight, allFds)
+        run_cc_sl(cvSL, allFds)
     else:
         print "Something went wrong... exiting. \n"
         sys.exit()
 
 
 print "Finished!\n"
+
+"""
+class CVThread(threading.Thread):
+    def __init__(self, threadID, name, sl, ds):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.sl = sl
+        self.ds = ds
+
+    def run(self):
+        print "Starting " + self.name
+        run_cv_sl(self.name, self.sl, self.ds)
+        print "Exiting " + self.name
+
+thread1 = CVThread(1, "Thread-1", cvSL, lFds)
+thread2 = CVThread(2, "Thread-2", cvSL, pFds)
+thread1.start()
+thread2.start()
+"""
