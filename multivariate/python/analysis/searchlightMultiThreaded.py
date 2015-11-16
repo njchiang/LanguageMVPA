@@ -24,7 +24,7 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 maskList = ["left_IFG_operc", "IFG_triang", "STG_post", "grayMatter"]
 mask = maskList[3]
-con = contrasts[0]
+con = contrasts[4]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
