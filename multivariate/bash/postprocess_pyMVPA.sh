@@ -16,13 +16,13 @@ mkdir raw
 mkdir std
 mv *.nii.gz raw
 cd raw
-for model in ActPass_lang ActPass_pic #cross_verb_L2P cross_verb_P2L
+for model in ActPass_lang ActPass_pic RelCan_lang RelCan_pic #cross_verb_L2P cross_verb_P2L
 do
 for indMap in `ls | grep _${model}_cvsl.nii.gz`
 do
 sub=`echo ${indMap} | cut -d '_' -f1`
 echo ${sub}
-fslmaths ${indMap} -bin tmp.nii.gz
+fslmaths ${projectDir}/masks/sub/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
 fslmaths tmp.nii.gz -mul 50 tmp.nii.gz
 fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
 regMat=${projectDir}/registration/${sub}_example_func2standard.mat
