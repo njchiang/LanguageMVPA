@@ -19,7 +19,7 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[0]
-con = contrasts[1]
+con = contrasts[5]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -122,12 +122,12 @@ for i in range(0, len(subList)):
     picAcc[i] = np.round(cv.ca.stats.stats['ACC%'], 1)
 
 
-print "Inanim Language Mean: " + str(np.mean(inAnimLangAcc)) + " Standard deviation: " + str(np.std(inAnimLangAcc))
-print "Anim Language Mean: " + str(np.mean(animLangAcc)) + " Standard deviation: " + str(np.std(animLangAcc))
-print "Language Mean: " + str(np.mean(langAcc)) + " Standard deviation: " + str(np.std(langAcc))
-print "Inanim Picture Mean: " + str(np.mean(inAnimPicAcc)) + " Standard deviation: " + str(np.std(inAnimPicAcc))
-print "Anim Picture Mean: " + str(np.mean(animPicAcc)) + " Standard deviation: " + str(np.std(animPicAcc))
-print "Picture Mean: " + str(np.mean(picAcc)) + " Standard deviation: " + str(np.std(picAcc))
+print "Inanim Language Mean: " + str(np.mean(inAnimLangAcc)) + " Standard deviation: " + str(np.std(inAnimLangAcc)/len(subList))
+print "Anim Language Mean: " + str(np.mean(animLangAcc)) + " Standard deviation: " + str(np.std(animLangAcc)/len(subList))
+print "Language Mean: " + str(np.mean(langAcc)) + " Standard deviation: " + str(np.std(langAcc)/len(subList))
+print "Inanim Picture Mean: " + str(np.mean(inAnimPicAcc)) + " Standard deviation: " + str(np.std(inAnimPicAcc)/len(subList))
+print "Anim Picture Mean: " + str(np.mean(animPicAcc)) + " Standard deviation: " + str(np.std(animPicAcc)/len(subList))
+print "Picture Mean: " + str(np.mean(picAcc)) + " Standard deviation: " + str(np.std(picAcc)/len(subList))
 
 
 # can split by language/picture (duh), then split by anim/inanim if i need...

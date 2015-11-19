@@ -22,9 +22,9 @@ outPath = os.path.join(projectDir, "Maps")
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post" "grayMatter"]
-mask = maskList[3]
-con = contrasts[2]
+maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
+mask = maskList[4]
+con = contrasts[1]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -58,11 +58,23 @@ else:
 # def run_cv_sl(threadName, sl, ds):
 
 def run_cv_sl(sl, ds, t):
+    zscore(ds)
     res = sl(ds)
-    sphere_accs = res.samples[0]
-    map2nifti(ds, sphere_accs).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
+    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_concat_cvsl.nii.gz'))
+
+
+def run_splitcv_sl(sl, ds, t):
+    ids = ds[0:16, :]
+    zscore(ids)
+    res = sl(ids)
+    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_inanim_' + con + '_' + t + '_concat_cvsl.nii.gz'))
+    ads = ds[16:32, :]
+    zscore(ads)
+    res = sl(ads)
+    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_concat_cvsl.nii.gz'))
 
 def run_cc_sl(sl, ds):
+    zscore(ds)
     res = sl(ds)
     l2p = res.samples[0]
     p2l = res.samples[1]
@@ -77,19 +89,19 @@ for i in range(0, len(subList)):
     bSeries = os.path.join(betaPath, bSeriesName)
     maskName = str(sub+"_"+mask+".nii.gz")
     maskFile = os.path.join(maskPath, maskName)
-    allFds = fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
+    fullSet = fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
+    allFds = fullSet.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     del(bSeries, bSeriesName, maskName, maskFile)
 
     if slInt == 1:
         lFds = allFds[0:32, :]
-        zscore(lFds)
         run_cv_sl(cvSL, lFds, 'lang')
+        run_splitcv_sl(cvSL, lFds, 'lang')
         pFds = allFds[32:64, :]
-        zscore(pFds)
         run_cv_sl(cvSL, pFds, 'pic')
+        run_splitcv_sl(cvSL, pFds, 'pic')
 
     elif slInt == 0:
-        zscore(allFds)
         run_cc_sl(cvSL, allFds)
     else:
         print "Something went wrong... exiting. \n"

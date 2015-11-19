@@ -73,6 +73,14 @@ frac_higher = np.round(np.mean(sphere_accs > chance_level + 2 * res_std), 3)
 
 map2nifti(fds, sphere_accs).to_filename('sl.nii.gz'))
 
+»    ds = dataset.copy(deep=False,
+                       sa=['targets', 'chunks'],
+                       fa=['voxel_indices'],
+                       a=['mapper'])
+
+    map2nifti(ds, sphere_accs).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_cvsl.nii.gz'))
+map2nifti(res, imghdr=fullSet.a.imghdr).to
+
 
 ##### 
 #feature selection
