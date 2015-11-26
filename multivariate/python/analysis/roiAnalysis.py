@@ -8,18 +8,20 @@ print "Initializing..."
 # initialize paths
 projectDir="Z:\\fmri\\LanguageMVPA"
 codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
-betaPath = os.path.join(projectDir, "betas")
+betaPath = os.path.join(projectDir, "betas", "tstat")
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
 outPath = os.path.join(projectDir, "Maps")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
+# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
+#            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[0]
-con = contrasts[5]
+con = contrasts[1]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -27,13 +29,14 @@ else:
     slType = "cross validation"
     slInt = 1
 # initialize classifier
-clf = LinearNuSVMC()
-# clf=RbfNuSVMC()
-
-fsel = SensitivityBasedFeatureSelection(OneWayAnova(), FixedNElementTailSelector(500, mode='select', tail='upper'))
+# clf = LinearNuSVMC()
+# clf = LinearCSVMC()
+clf=RbfNuSVMC()
+nVox = 50
+fsel = SensitivityBasedFeatureSelection(OneWayAnova(), FixedNElementTailSelector(nVox, mode='select', tail='upper'))
 fclf = FeatureSelectionClassifier(clf, fsel)
 cv = CrossValidation(fclf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
-#cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
+# cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
 attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
 
 # make sure everything is okay.

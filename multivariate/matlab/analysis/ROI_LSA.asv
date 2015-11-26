@@ -13,15 +13,10 @@ function [] = ROI_LSA()
 %% Initialisation %%
 %%%%%%%%%%%%%%%%%%%%
 
-% toolboxRoot = '~/Box Sync/UCLA/Research/LanguageMVPA/code'; addpath(genpath(toolboxRoot));
-try
-    toolboxRoot = 'Z:\GitHub\LanguageMVPA\multivariate\matlab'; addpath(genpath(toolboxRoot));
-catch
-    toolboxRoot = '~/GitHub/LanguageMVPA/multivariate/matlab'; addpath(genpath(toolboxRoot));
-end
+toolboxRoot = '~/Box Sync/UCLA/Research/LanguageMVPA/code'; addpath(genpath(toolboxRoot));
 % cd /space/raid5/data/monti/Analysis/LanguageMVPA/RSA
 cd Z:\fmri\LanguageMVPA
-% userOptions = defineUserOptions_Group();
+userOptions = defineUserOptions_Group();
 userOptions = defineUserOptions_LSA;
 % userOptions = defineUserOptions_Syntax();
 % userOptions.analysisName='ROI_LSA';
@@ -34,7 +29,7 @@ userOptions.analysisType=analysisType;
 % % load data and masks
 % % fullBrainVols = fMRIDataPreparation('SPM', userOptions);
 % fullBrainVols=fMRIDataPreparation(betaCorrespondence_Semantics(), userOptions);
-fullBrainVols=fMRIDataPreparation(betaCorrespondence_LSA(), userOptions);
+fullBrainVols=fMRIDataPreparation(betaCorrespondence_Group(), userOptions);
 binaryMasks_nS = fMRIMaskPreparation(userOptions);
 % load(['ImageData/' userOptions.analysisName '_ImageData.mat']);
 % load(['ImageData/ROI_masks.mat']);

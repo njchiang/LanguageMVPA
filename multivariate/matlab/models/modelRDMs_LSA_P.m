@@ -8,8 +8,7 @@
 %  Cai Wingfield 11-2009
 
 function Models = modelRDMs_LSA_P()
-anim=repmat([1*ones(1,4) 2*ones(1,4) 1*ones(1,4) 2*ones(1,8) 1*ones(1,8) 2*ones(1,4)], 1, 2);
-fam=repmat([1*ones(1,4) 2*ones(1,8) 1*ones(1,4) 3*ones(1,8) 4*ones(1,8) ], 1, 2);
+anim=repmat([1*ones(1,16) 2*ones(1,16)], 1, 2);
 verb=repmat([ones(1,4) 2*ones(1,4) 3*ones(1,4) 4*ones(1,4) 5*ones(1,4) 6*ones(1,4) 7*ones(1,4) 8*ones(1,4)],1,2);
 syntax=repmat([4 3 2 1], 1, 16);
 actpass=repmat([2 2 1 1], 1, 16);
@@ -52,7 +51,7 @@ Models.PRelCan(logical(eye(size(genModel))))=0;
 
 
 StructureMat=genModel;
-StructureMat(complexlab==1, complexlab==1)=0;
+% StructureMat(complexlab==1, complexlab==1)=0;
 StructureMat(complexlab==2, complexlab==2)=0;
 
 
@@ -61,7 +60,7 @@ Models.PStructure(1:32, 1:32)=nan;
 Models.PStructure(logical(eye(size(genModel))))=0;
 
 
-Models.PCSyntax=Models.PSyntax+Models.PRelCan+Models.PActPass+Models.PStructure;
+Models.PCSyntax=Models.PSyntax+Models.PRelCan+Models.PActPass; % +Models.PStructure;
 
 VerbMat=genModel;
 VerbMat(verb==1, verb==1)=0;
@@ -79,23 +78,6 @@ Models.PVerb=VerbMat;
 Models.PVerb(1:32, 1:32)=nan;
 Models.PVerb(logical(eye(size(genModel))))=0;
 
-FamMat=genModel;
-FamMat(fam==1, fam==1)=0;
-FamMat(fam==2, fam==2)=0;
-FamMat(fam==3, fam==3)=0;
-FamMat(fam==4, fam==4)=0;
-FamMat(fam==5, fam==5)=0;
-FamMat(fam==6, fam==6)=0;
-FamMat(fam==7, fam==7)=0;
-FamMat(fam==8, fam==8)=0;
-
-
-Models.PFam=FamMat;
-Models.PFam(1:32, 1:32)=nan;
-Models.PFam(logical(eye(size(genModel))))=0;
-
-
-
 
 AnimMat=genModel;
 AnimMat(anim==1, anim==1)=0;
@@ -106,4 +88,4 @@ Models.PAnim(1:32, 1:32)=nan;
 Models.PAnim(logical(eye(size(genModel))))=0;
 
 
-Models.PSemantics=Models.PVerb+Models.PFam+Models.PAnim;
+Models.PSemantics=Models.PVerb+Models.PAnim;
