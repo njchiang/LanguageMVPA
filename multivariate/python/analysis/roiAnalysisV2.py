@@ -7,7 +7,7 @@ print "Initializing..."
 # initialize paths
 projectDir="Z:\\fmri\\LanguageMVPA"
 codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
-betaType = "cope"  # cope orig
+betaType = "tstat"  # tstat cope orig
 betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
