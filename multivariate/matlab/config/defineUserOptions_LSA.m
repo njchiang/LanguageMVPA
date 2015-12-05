@@ -18,7 +18,7 @@ function userOptions = defineUserOptions_LSA()
 %% Project details
 
 % This name identifies a collection of files which all belong to the same run of a project.
-userOptions.analysisName = 'LSA';
+userOptions.analysisName = 'Compute';
 
 % This is the root directory of the project.
 % userOptions.rootPath = '/space/raid5/data/monti/Analysis/Music/mvpa_data';
@@ -96,7 +96,7 @@ userOptions.maskNames = { ...
 userOptions.voxelSize = [3 3 3];
 
 % What radius of searchlight should be used (mm)?
-userOptions.searchlightRadius = 6;
+userOptions.searchlightRadius = 12;
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% EXPERIMENTAL SETUP %%
@@ -195,60 +195,17 @@ userOptions.alternativeConditionLabels=userOptions.conditionLabels;
 userOptions.useAlternativeConditionLabels = true;
 
 % What colours should be given to the conditions?
-%Verb
-% userOptions.conditionColours = [repmat([1 0 0], 4,1); ...
-%     repmat([0 1 0], 4,1); ...
-%     repmat([0 0 1], 4,1); ...
-%     repmat([1 1 0], 4,1); ...
-%     repmat([1 0 1], 4,1); ...
-%     repmat([0 1 1], 4,1); ...
-%     repmat([0 0 0], 4,1); ...
-%     repmat([1 1 1], 4,1) ...
-%     ];
+% Verb
+userOptions.conditionColours = [repmat([1 0 0], 4,1); ...
+    repmat([0 1 0], 4,1); ...
+    repmat([0 0 1], 4,1); ...
+    repmat([1 1 0], 4,1); ...
+    repmat([1 0 1], 4,1); ...
+    repmat([0 1 1], 4,1); ...
+    repmat([0 0 0], 4,1); ...
+    repmat([1 1 1], 4,1) ...
+    ];
 
-
-
-%Syntax
-userOptions.conditionColours=repmat([
-    1 0 0
-    0 1 0
-    0 0 1
-    1 0 1 ], 8, 1);
-
-%anim
-% userOptions.conditionColours=([
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1 ]);
 % Which distance measure to use when calculating first-order RDMs.
 userOptions.distance = 'Correlation';
 
