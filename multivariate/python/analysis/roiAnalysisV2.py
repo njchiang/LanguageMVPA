@@ -7,7 +7,7 @@ print "Initializing..."
 # initialize paths
 projectDir="Z:\\fmri\\LanguageMVPA"
 codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
-betaType = "tstat"  # tstat cope orig
+betaType = "cope"  # tstat cope orig
 betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
@@ -20,9 +20,9 @@ contrasts = ["verb", "syntax", "anim",  "ActPass", "RelCan", "stimtype", "cross_
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 # subList = ["testv2"]
-maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
+maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "grayMatter"]
 mask = maskList[4]
-con = contrasts[1]
+con = contrasts[2]
 dsType = "Lang"
 # dsType = "Pic"
 
