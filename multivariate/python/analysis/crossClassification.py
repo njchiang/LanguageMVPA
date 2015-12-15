@@ -16,11 +16,11 @@ betaPath = os.path.join(projectDir, "betas")
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
 outPath = os.path.join(projectDir, "Maps")
-maskList = ["left_IFG_operc", "IFG_triang", "STG_post"]
-mask="grayMatter"
-clf=LinearNuSVMC()
+# maskList = ["left_IFG_operc", "IFG_triang", "STG_post"]
+mask = "grayMatter"
+clf = LinearNuSVMC()
 # clf=RbfNuSVMC()
-cv = CrossValidation(clf, NFoldPartitioner(),errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
+cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
 # 9mm radius searchlight
 # sl = sphere_searchlight(cv, radius=4, postproc=mean_sample())
 sl = sphere_searchlight(cv, radius=4)

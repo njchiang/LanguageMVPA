@@ -18,7 +18,7 @@ function userOptions = defineUserOptions_LSA()
 %% Project details
 
 % This name identifies a collection of files which all belong to the same run of a project.
-userOptions.analysisName = 'LSA';
+userOptions.analysisName = 'Compute';
 
 % This is the root directory of the project.
 % userOptions.rootPath = '/space/raid5/data/monti/Analysis/Music/mvpa_data';
@@ -61,7 +61,7 @@ userOptions.maskNames = { ...
     'right_angular',  ...
     'right_MTG_post',...
     'right_caudate', ...
-    'grayMatter'
+%     'grayMatter'
     };
 %wholehead
 
@@ -96,7 +96,7 @@ userOptions.maskNames = { ...
 userOptions.voxelSize = [3 3 3];
 
 % What radius of searchlight should be used (mm)?
-userOptions.searchlightRadius = 6;
+userOptions.searchlightRadius = 12;
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %% EXPERIMENTAL SETUP %%
@@ -105,10 +105,10 @@ userOptions.searchlightRadius = 6;
 % The list of subjects to be included in the study.
 userOptions.subjectNames = { ...
     'LMVPA001', 'LMVPA002', 'LMVPA003', 'LMVPA005', ...
-    'LMVPA006', 'LMVPA007', 'LMVPA008', 'LMVPA009', ...
+    'LMVPA006',  'LMVPA008', 'LMVPA009', ...
     'LMVPA010', 'LMVPA011', 'LMVPA013', 'LMVPA014', ...
     'LMVPA015', 'LMVPA016', 'LMVPA017', 'LMVPA018', ...
-    'LMVPA019'};% eg CBUXXXXX LMVPA007', 'LMVPA001', 'LMVPA002',
+    'LMVPA019'};% eg CBUXXXXX LMVPA007', 'LMVPA001', 'LMVPA002', 'LMVPA007',
 % The default colour label for RDMs corresponding to RoI masks (as opposed to models).
 userOptions.RoIColor = [0 0 1];
 userOptions.ModelColor = [0 1 0];
@@ -195,60 +195,17 @@ userOptions.alternativeConditionLabels=userOptions.conditionLabels;
 userOptions.useAlternativeConditionLabels = true;
 
 % What colours should be given to the conditions?
-%Verb
-% userOptions.conditionColours = [repmat([1 0 0], 4,1); ...
-%     repmat([0 1 0], 4,1); ...
-%     repmat([0 0 1], 4,1); ...
-%     repmat([1 1 0], 4,1); ...
-%     repmat([1 0 1], 4,1); ...
-%     repmat([0 1 1], 4,1); ...
-%     repmat([0 0 0], 4,1); ...
-%     repmat([1 1 1], 4,1) ...
-%     ];
+% Verb
+userOptions.conditionColours = [repmat([1 0 0], 4,1); ...
+    repmat([0 1 0], 4,1); ...
+    repmat([0 0 1], 4,1); ...
+    repmat([1 1 0], 4,1); ...
+    repmat([1 0 1], 4,1); ...
+    repmat([0 1 1], 4,1); ...
+    repmat([0 0 0], 4,1); ...
+    repmat([1 1 1], 4,1) ...
+    ];
 
-
-
-%Syntax
-userOptions.conditionColours=repmat([
-    1 0 0
-    0 1 0
-    0 0 1
-    1 0 1 ], 8, 1);
-
-%anim
-% userOptions.conditionColours=([
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     1 0 0
-%     0 0 1
-%     0 0 1
-%     0 0 1
-%     0 0 1 ]);
 % Which distance measure to use when calculating first-order RDMs.
 userOptions.distance = 'Correlation';
 
