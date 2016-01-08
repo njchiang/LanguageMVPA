@@ -6,11 +6,11 @@ from mvpa2.suite import *
 import os
 print "Initializing..."
 # initialize paths
-projectDir="Z:\\fmri\\LanguageMVPA"
-codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
-# betaPath = os.path.join(projectDir, "betas", "tstat")
+projectDir="D:\\fmri\\LanguageMVPA"
+codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
+betaPath = os.path.join(projectDir, "betas", "cope")
 # betaPath = os.path.join(projectDir, "betas", "orig")
-betaPath = os.path.join(projectDir, "betas", "tstat")
+# betaPath = os.path.join(projectDir, "betas", "tstat")
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
 outPath = os.path.join(projectDir, "Maps")

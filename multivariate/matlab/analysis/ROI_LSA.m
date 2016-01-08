@@ -16,12 +16,12 @@ function [] = ROI_LSA(analysisType)
 
 % toolboxRoot = '~/Box Sync/UCLA/Research/LanguageMVPA/code'; addpath(genpath(toolboxRoot));
 try
-    toolboxRoot = 'Z:\GitHub\LanguageMVPA\multivariate\matlab'; addpath(genpath(toolboxRoot));
+    toolboxRoot = 'D:\GitHub\LanguageMVPA\multivariate\matlab'; addpath(genpath(toolboxRoot));
 catch
     toolboxRoot = '~/GitHub/LanguageMVPA/multivariate/matlab'; addpath(genpath(toolboxRoot));
 end
 % cd /space/raid5/data/monti/Analysis/LanguageMVPA/RSA
-cd Z:\fmri\LanguageMVPA
+cd D:\fmri\LanguageMVPA
 % userOptions = defineUserOptions_Group();
 userOptions = defineUserOptions_LSA;
 gotoDir(userOptions.rootPath);
@@ -36,9 +36,9 @@ userOptions.analysisType=analysisType;
 % clear fullBrainVols binaryMasks_nS
 
 
+userOptions.analysisName='cope';
 
-
-load('ImageData/LSA_responsePatterns.mat')
+load(['ImageData/' userOptions.analysisName '_responsePatterns.mat'])
 
 if strcmpi(userOptions.analysisType, 'SVM')
     
@@ -68,6 +68,7 @@ if strcmpi(userOptions.analysisType, 'SVM')
                 thisLabel, theseRuns, 'opts', OPTS);
         end
     end
+    save(['Statistics/' userOptions.analysisName '_SVM.mat'], res, userOptions, OPTS);
 elseif strcmpi(userOptions.analysisType, 'RSA')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % %% RSA %%

@@ -5,8 +5,8 @@ from mvpa2.suite import *
 import os
 print "Initializing..."
 # initialize paths
-projectDir="Z:\\fmri\\LanguageMVPA"
-codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
+projectDir="D:\\fmri\\LanguageMVPA"
+codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
 betaType = "cope"  # tstat cope orig
 betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks", "sub")
@@ -15,16 +15,16 @@ outPath = os.path.join(projectDir, "Maps")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim",  "ActPass", "RelCan", "stimtype", "cross_anim", "cross_verb"]
-# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-#            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
+subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
+#            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 # subList = ["testv2"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "grayMatter"]
-mask = maskList[4]
-con = contrasts[2]
-dsType = "Lang"
-# dsType = "Pic"
+mask = maskList[5]
+con = contrasts[0]
+# dsType = "Lang"
+dsType = "Pic"
 
 if 'cross' in con:
     slType = "cross classification"
