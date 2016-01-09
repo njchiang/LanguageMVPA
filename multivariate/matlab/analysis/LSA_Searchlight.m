@@ -31,11 +31,12 @@ DetailsFilename = [userOptions.analysisName, '_fMRISearchlight_Details.mat'];
 userOptions.maskNames={'grayMatter'};
 % fullBrainVols = fMRIDataPreparation(betaCorrespondence_Semantics(), userOptions);
 % binaryMasks_nS = fMRIMaskPreparation(userOptions);
-load('Z:\fmri\LanguageMVPA\ImageData\LSA_Masks.mat')
-load('Z:\fmri\LanguageMVPA\ImageData\LSA_ImageData.mat')
+load('D:\fmri\LanguageMVPA\ImageData\LSA_Masks.mat')
+load('D:\fmri\LanguageMVPA\ImageData\cope_ImageData.mat')
 
-models = constructModelRDMs(modelRDMs_LSA, userOptions);
-models = constructModelRDMs(modelRDMs_ROI_layer, userOptions);
+% models = constructModelRDMs(modelRDMs_LSA, userOptions);
+models = constructModelRDMs(modelRDMs_SL, userOptions);
+% models = constructModelRDMs(modelRDMs_ROI_layer, userOptions);
 figureRDMs(models, userOptions)
 %%compute the correlation maps per subject
 % add mask loop?
