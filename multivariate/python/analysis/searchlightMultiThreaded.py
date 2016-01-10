@@ -11,20 +11,21 @@ import Queue
 # INITIALIZING
 print "Initializing..."
 # initialize paths
-projectDir="Z:\\fmri\\LanguageMVPA"
-codeDir="Z:\GitHub\LanguageMVPA\multivariate\python"
-betaPath = os.path.join(projectDir, "betas")
+projectDir="D:\\fmri\\LanguageMVPA"
+codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
+betaPath = os.path.join(projectDir, "betas", "cope")
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
-outPath = os.path.join(projectDir, "Maps")
+outPath = os.path.join(projectDir, "Maps", "PyMVPA")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+# subList = ["LMVPA001"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
-con = contrasts[5]
+con = contrasts[7]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -34,10 +35,13 @@ else:
 # initialize classifier
 clf = LinearNuSVMC()
 # clf=RbfNuSVMC()
-cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
+# cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
+# cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t))
+# note: this calculates error, and flips is back.
+cv = CrossValidation(clf, NFoldPartitioner())
 # 9mm radius searchlight
 # sl = sphere_searchlight(cv, radius=4, postproc=mean_sample())
-cvSL = sphere_searchlight(cv, radius=4)
+# cvSL = sphere_searchlight(cv, radius=4)
 attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
 
 # make sure everything is okay.
@@ -57,25 +61,44 @@ else:
 
 # def run_cv_sl(threadName, sl, ds):
 
+# need to be fixed, I think it writes all of the samples instead of the mean
+
+
+def error2acc(d):
+    d.samples *= -1
+    d.samples += 1
+    return d
+
 def run_cv_sl(sl, ds, t):
+    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     zscore(ds)
-    res = sl(ds)
-    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_concat_cvsl.nii.gz'))
+    thisSL = sl
+    res = thisSL(ds)
+    res = error2acc(res)
+    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
 
-
+# these need to be fixed... I think it writes all of the samples instead of the mean
 def run_splitcv_sl(sl, ds, t):
-    ids = ds[0:16, :]
+    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
+    ids = fds[0:16, :]
     zscore(ids)
-    res = sl(ids)
-    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_inanim_' + con + '_' + t + '_concat_cvsl.nii.gz'))
+    thisSL = sl
+    res = thisSL(ids)
+    res = error2acc(res)
+    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_inanim_' + con + '_' + t + '_cvsl.nii.gz'))
     ads = ds[16:32, :]
     zscore(ads)
-    res = sl(ads)
-    map2nifti(res, imghdr=fullSet.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_concat_cvsl.nii.gz'))
+    thisSL = sl
+    res = thisSL(ads)
+    res = error2acc(res)
+    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_cvsl.nii.gz'))
 
 def run_cc_sl(sl, ds):
-    zscore(ds)
-    res = sl(ds)
+    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
+    zscore(fds)
+    thisSL = sl
+    res = thisSL(fds)
+    res = error2acc(res)
     l2p = res.samples[0]
     p2l = res.samples[1]
     map2nifti(ds, l2p).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_L2P_ccsl.nii.gz'))
@@ -90,19 +113,20 @@ for i in range(0, len(subList)):
     maskName = str(sub+"_"+mask+".nii.gz")
     maskFile = os.path.join(maskPath, maskName)
     fullSet = fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
-    allFds = fullSet.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     del(bSeries, bSeriesName, maskName, maskFile)
 
     if slInt == 1:
-        lFds = allFds[0:32, :]
+        cvSL = sphere_searchlight(cv, radius=4, postproc=mean_sample())
+        lFds = fullSet[0:32, :]
         run_cv_sl(cvSL, lFds, 'lang')
         run_splitcv_sl(cvSL, lFds, 'lang')
-        pFds = allFds[32:64, :]
+        pFds = fullSet[32:64, :]
         run_cv_sl(cvSL, pFds, 'pic')
         run_splitcv_sl(cvSL, pFds, 'pic')
 
     elif slInt == 0:
-        run_cc_sl(cvSL, allFds)
+        cvSL = sphere_searchlight(cv, radius=4)
+        run_cc_sl(cvSL, fullSet)
     else:
         print "Something went wrong... exiting. \n"
         sys.exit()
