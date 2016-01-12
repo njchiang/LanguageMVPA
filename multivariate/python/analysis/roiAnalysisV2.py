@@ -42,8 +42,8 @@ else:
 def initCV():
     # initialize classifier
     # clf = LinearCSVMC()
-    # clf = LinearNuSVMC()
-    clf = RbfNuSVMC()
+    clf = LinearNuSVMC()
+    # clf = RbfNuSVMC()
     # feature selection helpers
     nf = 100
     fselector = FixedNElementTailSelector(nf, tail='upper',
@@ -63,28 +63,23 @@ def initCV():
 def loadSubData(m, c, t):
     subFileName = os.path.join(betaPath, t + "_" + m + "_" + c + ".nii.gz")
     cv_attr = SampleAttributes(os.path.join(labelPath, (c + "_attribute_labels.txt")))
-    try:
-        print "Found previously generated file, loading..."
-        d = h5load(subFileName)
-    except IOError:
-        print "Could not load dataset, regenerating..."
-        d = []
-        for i in range(0, len(subList)):
-            sub = subList[i]
-            print sub
-            bSeriesName = str(sub + "_LSA_Series.nii.gz")
-            maskName = str(sub + "_" + mask + ".nii.gz")
-            bSeries = os.path.join(betaPath, bSeriesName)
-            maskFile = os.path.join(maskPath, maskName)
-            print "loading files..."
-            tmp = (fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile))
-            if dsType == "Lang":
-                d.append(tmp[0:32])
-            elif dsType == "Pic":
-                d.append(tmp[32:64])
-            else:
-                d.append(tmp)
-        h5save(subFileName, d)
+    d = []
+    for i in range(0, len(subList)):
+        sub = subList[i]
+        print sub
+        bSeriesName = str(sub + "_LSA_Series.nii.gz")
+        maskName = str(sub + "_" + mask + ".nii.gz")
+        bSeries = os.path.join(betaPath, bSeriesName)
+        maskFile = os.path.join(maskPath, maskName)
+        print "loading files..."
+        tmp = (fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile))
+        if dsType == "Lang":
+            d.append(tmp[0:32])
+        elif dsType == "Pic":
+            d.append(tmp[32:64])
+        else:
+            d.append(tmp)
+    h5save(subFileName, d)
     return d
 
 
@@ -149,3 +144,11 @@ else:
 
 print "Running " + dsType + " dataset"
 res = runWSRoi(ds_all)
+
+
+"""
+  try:
+        print "Found previously generated file, loading..."
+        d = h5load(subFileName)
+    except IOError:
+        print "Could not load dataset, regenerating..." """
