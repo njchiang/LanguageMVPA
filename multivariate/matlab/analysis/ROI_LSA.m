@@ -36,7 +36,7 @@ userOptions.analysisType=analysisType;
 % clear fullBrainVols binaryMasks_nS
 
 
-userOptions.analysisName='cope';
+userOptions.analysisName='tstat';
 
 load(['ImageData/' userOptions.analysisName '_responsePatterns.mat'])
 
