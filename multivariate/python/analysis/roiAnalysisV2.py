@@ -7,7 +7,7 @@ print "Initializing..."
 # initialize paths
 projectDir="D:\\fmri\\LanguageMVPA"
 codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
-betaType = "cope"  # tstat cope orig
+betaType = "tstat"  # tstat cope orig
 betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
@@ -22,7 +22,7 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007
 # subList = ["testv2"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "grayMatter"]
 mask = maskList[5]
-con = contrasts[0]
+con = contrasts[6]
 # dsType = "Lang"
 dsType = "Pic"
 
@@ -79,7 +79,7 @@ def loadSubData(m, c, t):
             d.append(tmp[32:64])
         else:
             d.append(tmp)
-    h5save(subFileName, d)
+    # h5save(subFileName, d)
     return d
 
 
