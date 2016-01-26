@@ -13,12 +13,12 @@ betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks")
 labelPath = os.path.join(codeDir, "labels")
 outPath = os.path.join(projectDir, "Maps")
-
+nVox = 50
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "grayMatter"]
-mask = maskList[5]
-con = contrasts[2]
+mask = maskList[0]
+con = contrasts[0]
 
 
 def loadData(stim, c, m):
@@ -33,13 +33,12 @@ def loadData(stim, c, m):
 lds = loadData("lang", con, mask)
 pds = loadData("pic", con, mask)
 
-def initCV():
+def initCV(nf):
     # initialize classifier
     # clf = LinearCSVMC()
     clf = LinearNuSVMC()
     # clf = RbfNuSVMC()
     # feature selection helpers
-    nf = 100
     fselector = FixedNElementTailSelector(nf, tail='upper',
                                           mode='select',sort=False)
     sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
@@ -52,14 +51,14 @@ def initCV():
     # cv = CrossValidation(fclf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
     return cv
 
-lcv = initCV()
+lcv = initCV(nVox)
 bsc_l_results = lcv(lds)
-pcv = initCV()
+pcv = initCV(nVox)
 bsc_p_results = pcv(pds)
-print "Avg between-subject accuracy: " + str(np.mean(bsc_l_results)) + " +/- " + str(np.std(bsc_l_results) / np.sqrt(16))
-print "Avg between-subject accuracy: " + str(np.mean(bsc_p_results)) + " +/- " + str(np.std(bsc_p_results) / np.sqrt(16))
+print "Avg between-subject L accuracy: " + str(np.mean(bsc_l_results)) + " +/- " + str(np.std(bsc_l_results) / np.sqrt(16))
+print "Avg between-subject P accuracy: " + str(np.mean(bsc_p_results)) + " +/- " + str(np.std(bsc_p_results) / np.sqrt(16))
 
-ccv = initCV()
+ccv = initCV(nVox)
 cc = str("cross_" + con)
 cv_attr = SampleAttributes(os.path.join(labelPath, ("crossSub_" + cc + "_attribute_labels.txt")))
 bSeriesName = str(con + ".nii.gz")
@@ -68,5 +67,5 @@ bSeries = os.path.join(betaPath, bSeriesName)
 maskFile = os.path.join(maskPath, maskName)
 fds = (fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile))
 bsc_c_results = ccv(fds)
-print "Avg between-subject accuracy: " + str(np.mean(bsc_c_results[0]))
-print "Avg between-subject accuracy: " + str(np.mean(bsc_c_results[1]))
+print "Avg between-subject L2P accuracy: " + str(np.mean(bsc_c_results[0]))
+print "Avg between-subject P2L accuracy: " + str(np.mean(bsc_c_results[1]))

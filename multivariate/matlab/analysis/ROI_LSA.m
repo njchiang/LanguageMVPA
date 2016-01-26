@@ -89,8 +89,10 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     PModels = Models;
     % Language Models Only
     for i = 1:length(Models)
-        LModels(i).RDM(33:64, 33:64) = nan;
-        PModels(i).RDM(1:32, 1:32) = nan;
+        LModels(i).RDM(33:64, :) = nan;
+        LModels(i).RDM(:, 33:64) = nan;
+        PModels(i).RDM(:, 1:32) = nan;
+        PModels(i).RDM(1:32, :) = nan;
         LModels(i).RDM(logical(eye(length(LModels(i).RDM)))) = 0;
         PModels(i).RDM(logical(eye(length(PModels(i).RDM)))) = 0;
     end
