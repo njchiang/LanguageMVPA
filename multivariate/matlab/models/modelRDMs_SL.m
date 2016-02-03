@@ -1,4 +1,4 @@
-function Models = modelRDMs_Compute()
+function Models = modelRDMs_SL()
 
 WholeTopics= [...
 0	12	12	12	5	5	5	5	54	54	54	54	15	15	15	15	51	51	51	51	58	58	58	58	35	35	35	35	24	24	24	24
@@ -35,8 +35,6 @@ WholeTopics= [...
 39	39	39	39	17	17	17	17	30	30	30	30	45	45	45	45	44	44	44	44	48	48	48	48	13	13	13	13	3	3	3	0
 ]./64;
 Models.WholeTopics= repmat(WholeTopics,2,2);
-
-
 WholeLSA=1- [...
 1	0.81	0.72	0.71	0.48	0.61	0.6	0.64	0.28	0.42	0.45	0.51	0.19	0.31	0.35	0.42	0.46	0.62	0.57	0.6	0.49	0.61	0.58	0.6	0.4	0.61	0.57	0.6	0.33	0.43	0.47	0.51
 0.81	1	0.82	0.92	0.53	0.84	0.76	0.87	0.37	0.62	0.6	0.73	0.3	0.49	0.5	0.62	0.52	0.92	0.81	0.89	0.6	0.91	0.82	0.89	0.44	0.9	0.8	0.88	0.49	0.66	0.69	0.77
@@ -254,6 +252,46 @@ RelCanMat(logical(eye(size(genModel))))=0;
 
 Models.SyntaxComplex = ActPassMat+RelCanMat+SyntaxMat;
 
-Models.LangMat = ones(64); % these will be replaced by the mean model
-Models.PicMat = ones(64);
+anim = repmat([2*ones(1,16) ones(1,16)],1,2);
+animMat=genModel;
+animMat(anim==1, anim==1)=0;
+animMat(anim==2, anim==2)=0;
+animMat(logical(eye(size(genModel))))=0;
+Models.AnimDetector=animMat;
+
+[Models.LWholeTopics, Models.PWholeTopics, Models.CWholeTopics] = ...
+    splitModels(Models.WholeTopics);
+[Models.LAnimDetector, Models.PAnimDetector, Models.CAnimDetector] = ...
+    splitModels(Models.AnimDetector);
+[Models.LSyntaxComplex, Models.PSyntaxComplex, Models.CSyntaxComplex] = ...
+    splitModels(Models.SyntaxComplex);
+[Models.LSyntaxDetector, Models.PSyntaxDetector, Models.CSyntaxDetector] = ...
+    splitModels(Models.SyntaxDetector);
+[Models.LVerbDetector, Models.PVerbDetector, Models.CVerbDetector] = ...
+    splitModels(Models.VerbDetector);
+[Models.LNPLSA, Models.PNPLSA, Models.CNPLSA] = ...
+    splitModels(Models.NPLSA);
+[Models.LObjectLSA, Models.PObjectLSA, Models.CObjectLSA] = ...
+    splitModels(Models.ObjectLSA);
+[Models.LSubjectLSA, Models.PSubjectLSA, Models.CSubjectLSA] = ...
+    splitModels(Models.SubjectLSA);
+[Models.LVerbLSA, Models.PVerbLSA, Models.CVerbLSA] = ...
+    splitModels(Models.VerbLSA);
+[Models.LWholeLSA, Models.PWholeLSA, Models.CWholeLSA] = ...
+    splitModels(Models.WholeLSA);
+end
+
+function [L, P, C] = splitModels(orig)
+L = orig;
+L(33:64,:) = nan;
+L(:, 33:64)=nan;
+L(logical(eye(size(orig))))=0;
+P = orig;
+P(1:32, :) = nan;
+P(:, 1:32) = nan;
+P(logical(eye(size(orig))))=0;
+C = orig;
+C(1:32, 1:32) = nan;
+C(33:64, 33:64) = nan;
+C(logical(eye(size(orig))))=0;
 end
