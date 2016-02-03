@@ -3,7 +3,7 @@
 registers stat maps to standard space
 runs randomise
 usage:
-sh postprocess_pyMVPA.sh PyMVPA grayMatter cross_anim_L2P_ccsl 50
+sh postprocess_LMVPA.sh PyMVPA grayMatter cross_anim_L2P_ccsl 50
 doc
 
 #standard=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
@@ -31,11 +31,13 @@ fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
 fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
 regMat=${projectDir}/registration/${sub}_example_func2standard.mat
 
-flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} -applyxfm -init ${regMat}
-rm rnd_${indMap}
+flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} \
+	-applyxfm -init ${regMat}
+rm rnd_${indMap} tmp.nii.gz
 done
 
 fslmerge -t ../${mask}_${model}_Group.nii.gz ../std/std*_${mask}_${model}*nii.gz
-randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} -1 -T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter.hdr
+randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} \
+	-v 5 -1 -T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
 
 
