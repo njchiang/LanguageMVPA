@@ -8,7 +8,7 @@
 %%%%%%%%%%%%%%%%%%%%
 clear;clc
 returnHere = pwd; % We'll come back here later
-toolboxRoot = ['Z:/Box Sync/UCLA/Research/LanguageMVPA/code']; addpath(genpath(toolboxRoot));
+% toolboxRoot = ['D:/Box Sync/UCLA/Research/LanguageMVPA/code']; addpath(genpath(toolboxRoot));
 % Generate a userOptions structure
 userOptions = defineUserOptions_LSA(); %edit this
 % Generate a simulationOptions structure.
