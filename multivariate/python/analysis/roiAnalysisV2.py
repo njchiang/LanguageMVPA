@@ -12,7 +12,7 @@ betaPath = os.path.join(projectDir, "betas", betaType)
 maskPath = os.path.join(projectDir, "masks", "sub")
 labelPath = os.path.join(codeDir, "labels")
 outPath = os.path.join(projectDir, "Maps")
-nVox = 450
+nVox = 100
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim",  "ActPass", "RelCan", "stimtype", "cross_anim", "cross_verb"]
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
@@ -20,11 +20,12 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007
 # subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
 #            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 # subList = ["testv2"]
-maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "lSemantics", "lSyntax", "grayMatter"]
-mask = maskList[6]
-con = contrasts[1]
-dsType = "Lang"
-# dsType = "Pic"
+maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "lSemantics",
+            "lSyntax", "grayMatter", "left_angular"]
+mask = maskList[7]
+con = contrasts[0]
+# dsType = "Lang"
+dsType = "Pic"
 
 if 'cross' in con:
     slType = "cross classification"

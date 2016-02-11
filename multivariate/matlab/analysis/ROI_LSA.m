@@ -25,7 +25,7 @@ cd D:\fmri\LanguageMVPA
 % userOptions = defineUserOptions_Group();
 userOptions = defineUserOptions_LSA;
 gotoDir(userOptions.rootPath);
-userOptions.analysisType=analysisType;
+% userOptions.analysisType=analysisType;
 %%%%%%%%%%%%%%%%%%%%%%
 %% Data preparation %%
 % %%%%%%%%%%%%%%%%%%%%%%
@@ -84,10 +84,16 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     sRDMs = averageRDMs_subjectSession(RDMs, 'session');
     RDMs = averageRDMs_subjectSession(RDMs, 'session', 'subject');
     
+    lRDMs = RDMs;
+    pRDMs = RDMs;
+    for i = 1:length(RDMs)
+        lRDMs(i).RDM = lRDMs(i).RDM(1:32, 1:32);
+        pRDMs(i).RDM = pRDMs(i).RDM(33:64, 33:64);
+    end
     Models=constructModelRDMs(modelRDMs_Compute(),userOptions);
     LModels = Models;
     PModels = Models;
-    % Language Models Only
+
     for i = 1:length(Models)
         LModels(i).RDM(33:64, :) = nan;
         LModels(i).RDM(:, 33:64) = nan;
@@ -99,6 +105,9 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %% First-order visualisation %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    figureRDMs(lRDMs, userOptions, struct('fileName', 'l_RoIRDMs', 'figureNumber', 4));
+    figureRDMs(pRDMs, userOptions, struct('fileName', 'p_RoIRDMs', 'figureNumber', 5));
+ 
     figureRDMs(RDMs, userOptions, struct('fileName', 'RoIRDMs', 'figureNumber', 1));
     figureRDMs(LModels, userOptions, struct('fileName', 'ComputeRDMs', 'figureNumber', 2));
     figureRDMs(PModels, userOptions, struct('fileName', 'ComputeRDMs', 'figureNumber', 3));
