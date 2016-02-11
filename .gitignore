@@ -69,3 +69,5 @@ target/
 .Rproj.user
 
 *.Rproj
+
+multivariate/python/analysis/.ipynb_checkpoints/searchlightRSA-checkpoint.ipynb
