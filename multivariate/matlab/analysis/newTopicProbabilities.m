@@ -1,6 +1,6 @@
 try
     load('D:/CloudStation/Grad/Completed_Research/Topics/wiki/t300/wp_chain1_sample1.mat');
-    load('D:/CloudStation/Grad/Completed_Research/Topics/wiki/wiki_vocab.mat');catch
+    load('D:/CloudStation/Grad/Completed_Research/Topics/wiki/wiki_vocab.mat');
 catch
     load('~/CloudStation/Grad/Completed_Research/Topics/wiki/t300/wp_chain1_sample1.mat');
     load('~/CloudStation/Grad/Completed_Research/Topics/wiki/wiki_vocab.mat');
@@ -30,7 +30,7 @@ for i = 1:8
 end
 semanticsResSumDistn=bsxfun(@rdivide, semanticsResSum, sum(semanticsResSum,2));
 semanticsResProdDistn=bsxfun(@rdivide, semanticsResProd, sum(semanticsResProd,2));
-
+csvwrite('D:\CloudStation\scratchpad\LanguageMVPA\topicRepresentation.csv', semanticsResSumDistn)
 subplot(1,2,1)
 imagesc(corr(semanticsResSumDistn')); colorbar;
 subplot(1,2,2)
