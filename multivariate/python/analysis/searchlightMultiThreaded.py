@@ -25,7 +25,7 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007
 # subList = ["LMVPA001"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
-con = contrasts[6]
+con = contrasts[2]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -119,10 +119,10 @@ for i in range(0, len(subList)):
         cvSL = sphere_searchlight(cv, radius=4, postproc=mean_sample())
         lFds = fullSet[0:32, :]
         run_cv_sl(cvSL, lFds, 'lang')
-        run_splitcv_sl(cvSL, lFds, 'lang')
+        # run_splitcv_sl(cvSL, lFds, 'lang')
         pFds = fullSet[32:64, :]
         run_cv_sl(cvSL, pFds, 'pic')
-        run_splitcv_sl(cvSL, pFds, 'pic')
+        # run_splitcv_sl(cvSL, pFds, 'pic')
 
     elif slInt == 0:
         cvSL = sphere_searchlight(cv, radius=4)
