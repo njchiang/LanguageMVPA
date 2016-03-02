@@ -90,15 +90,18 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
         lRDMs(i).RDM = lRDMs(i).RDM(1:32, 1:32);
         pRDMs(i).RDM = pRDMs(i).RDM(33:64, 33:64);
     end
+    % need to input correct topic probabilities
     Models=constructModelRDMs(modelRDMs_Compute(),userOptions);
+    % 3/2/2016
+    Models=constructModelRDMs(modelRDMs_category_ROI(),userOptions);
     LModels = Models;
     PModels = Models;
 
     for i = 1:length(Models)
-        LModels(i).RDM(33:64, :) = nan;
-        LModels(i).RDM(:, 33:64) = nan;
-        PModels(i).RDM(:, 1:32) = nan;
-        PModels(i).RDM(1:32, :) = nan;
+        LModels(i).RDM(33:64, 33:64) = nan;
+%         LModels(i).RDM(:, 33:64) = nan;
+%         PModels(i).RDM(:, 1:32) = nan;
+        PModels(i).RDM(1:32, 1:32) = nan;
         LModels(i).RDM(logical(eye(length(LModels(i).RDM)))) = 0;
         PModels(i).RDM(logical(eye(length(PModels(i).RDM)))) = 0;
     end
@@ -127,8 +130,8 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     %% statistical inference %%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    % userOptions.RDMcorrelationType='Kendall_taua';
-    userOptions.RDMcorrelationType='Spearman';
+    userOptions.RDMcorrelationType='Kendall_taua';
+%     userOptions.RDMcorrelationType='Spearman';
     userOptions.RDMrelatednessTest = 'subjectRFXsignedRank';
     userOptions.RDMrelatednessThreshold = 0.05;
     userOptions.figureIndex = [10 11];
@@ -147,10 +150,7 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     for i = 1: size(sRDMs,1)
         aRDMs{i}=sRDMs(i,:);
     end
-    % for i=1:numel(LModels)
-    %     lFmodels{i}=LModels(i);
-    %     pFmodels{i}=PModels(i);
-    % end
+
     for i=1:numel(Models)
         lmodels{i}=LModels(i);
         pmodels{i}=PModels(i);

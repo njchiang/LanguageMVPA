@@ -34,8 +34,8 @@ userOptions.maskNames={'grayMatter'};
 load('D:\fmri\LanguageMVPA\ImageData\LMVPA_Masks.mat')
 load('D:\fmri\LanguageMVPA\ImageData\tstat_ImageData.mat')
 
-% models = constructModelRDMs(modelRDMs_LSA, userOptions);
-models = constructModelRDMs(modelRDMs_SL, userOptions);
+models = constructModelRDMs(modelRDMs_category_SL, userOptions);
+% models = constructModelRDMs(modelRDMs_compute_SL, userOptions);
 % models = constructModelRDMs(modelRDMs_ROI_layer, userOptions);
 figureRDMs(models, userOptions)
 %%compute the correlation maps per subject

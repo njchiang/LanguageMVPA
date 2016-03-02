@@ -26,9 +26,15 @@ for indMap in `ls | grep _${mask}_${model}.nii.gz`
 do
 sub=`echo ${indMap} | cut -d '_' -f1`
 echo ${sub}
-fslmaths ${projectDir}/masks/sub/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
-fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
-fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
+if [ "$chance" -gt "0"]
+then
+	fslmaths ${projectDir}/masks/sub/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
+	fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
+	fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
+else
+	cp ${indMap} rnd_${indMap}
+fi
+
 regMat=${projectDir}/registration/${sub}_example_func2standard.mat
 
 flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} \
