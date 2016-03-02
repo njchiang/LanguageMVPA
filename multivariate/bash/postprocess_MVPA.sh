@@ -26,7 +26,7 @@ for indMap in `ls | grep _${mask}_${model}.nii.gz`
 do
 sub=`echo ${indMap} | cut -d '_' -f1`
 echo ${sub}
-if [ "$chance" -gt "0"]
+if [ "$chance" -gt "0" ]
 then
 	fslmaths ${projectDir}/masks/sub/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
 	fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
