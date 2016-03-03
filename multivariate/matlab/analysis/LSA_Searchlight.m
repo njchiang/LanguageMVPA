@@ -47,7 +47,7 @@ for subI = 1:Nsubjects % can parallelize
     fprintf(['extracting fullBrain volumes for subject %d \n'],subI)
     singleSubjectVols=fullBrainVols.(subject);
     mask=binaryMasks_nS.(subject).(maskName);
-    userOptions.searchlightRadius = 12;
+    userOptions.searchlightRadius = 6; % 12 is too big...
     try
         fprintf(['loading correlation maps for subject %d \n'],subI)        
         load(['Maps/LSA/RDMs_', subject, '.mat'], 'searchlightRDMs');
@@ -64,9 +64,6 @@ for subI = 1:Nsubjects % can parallelize
         end
         toc
     end
-    % NEED TO DELETE STRUCTURALSPATH BEFORE RUNNING BECAUSE I DON'T KNOW HOW IT
-    % WORKS
-    %     [rs, ps, ns, searchlightRDMs] = fMRISearchlight_jeff(singleSubjectVols, models, mask, userOptions, searchlightOptions);
     for modelI=1:length(models)
         modelName=models(modelI).name;
         gotoDir(userOptions.rootPath, 'Maps/LSA');
