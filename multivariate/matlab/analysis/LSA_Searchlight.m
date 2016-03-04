@@ -11,6 +11,7 @@ returnHere = pwd; % We'll come back here later
 % toolboxRoot = ['D:/Box Sync/UCLA/Research/LanguageMVPA/code']; addpath(genpath(toolboxRoot));
 % Generate a userOptions structure
 userOptions = defineUserOptions_LSA(); %edit this
+userOptions.distance = 'euclidean';
 % Generate a simulationOptions structure.
 % simulationOptions = simulationOptions_demo_SL();
 
@@ -94,54 +95,54 @@ delete(gcp)
 % handleCurrentFigure([returnHere,filesep,'DEMO4',filesep,'SLsimulationSettings'],userOptions);
 
 %% load the previously computed rMaps and concatenate across subjects
-if strcmp(userOptions.postprocess, 'MATLAB')
-    disp('Postprocessing the subjects. Do you have RAM?')
-    % prepare the rMaps:
-    for subjectI = 1:Nsubjects
-        subData=load([userOptions.rootPath,filesep,'Maps',filesep,'rs_subject',num2str(subjectI),'.mat'])
-        rMaps{subjectI} = subData.rs;
-        fprintf(['loading the correlation maps for subject %d \n'],subjectI);
-    end
-    % concatenate across subjects
-    for modelI = 1:numel(models)
-        for subI = 1:Nsubjects
-            thisRs = rMaps{subI};
-            thisModelSims(:,:,:,subI) = thisRs(:,:,:,modelI);
-        end
-        % obtain a pMaps from applying a 1-sided signrank test and also t-test to
-        % the model similarities:
-        for x=1:size(thisModelSims,1)
-            for y=1:size(thisModelSims,2)
-                for z=1:size(thisModelSims,3)
-                    if mask(x,y,z) == 1
-                        [h p1(x,y,z)] = ttest(squeeze(thisModelSims(x,y,z,:)),0,0.05,'right');
-                        [p2(x,y,z)] = signrank_onesided(squeeze(thisModelSims(x,y,z,:)));
-                    else
-                        p1(x,y,z) = NaN;
-                        p2(x,y,z) = NaN;
-                    end
-                end
-            end
-            disp(x)
-        end
-        % apply FDR correction
-        pThrsh_t = FDRthreshold(p1,0.05,mask);
-        pThrsh_sr = FDRthreshold(p2,0.05,mask);
-        p_bnf = 0.05/sum(mask(:));
-        % mark the suprathreshold voxels in yellow
-        supraThreshMarked_t = zeros(size(p1));
-        supraThreshMarked_t(p1 <= pThrsh_t) = 1;
-        supraThreshMarked_sr = zeros(size(p2));
-        supraThreshMarked_sr(p2 <= pThrsh_sr) = 1;
-    end
-elseif strcmp(userOptions.postprocess, 'FSL')
-    gotoDir(userOptions.rootPath, 'Maps');
-    FSL_postprocess(pwd, [userOptions.rootPath '/registration', [userOptions.rootPath '/fnirt'] , [userOptions.rootPath '/masks'], maskName, models, userOptions);
-    %   FSL_postprocess(Maps_path, warp_path, ref_path, mask_path, maskName, models, userOptions)
-    cd(returnHere);
-else
-    disp('NOT postprocessing')
-end
+% if strcmp(userOptions.postprocess, 'MATLAB')
+%     disp('Postprocessing the subjects. Do you have RAM?')
+%     % prepare the rMaps:
+%     for subjectI = 1:Nsubjects
+%         subData=load([userOptions.rootPath,filesep,'Maps',filesep,'rs_subject',num2str(subjectI),'.mat'])
+%         rMaps{subjectI} = subData.rs;
+%         fprintf(['loading the correlation maps for subject %d \n'],subjectI);
+%     end
+%     % concatenate across subjects
+%     for modelI = 1:numel(models)
+%         for subI = 1:Nsubjects
+%             thisRs = rMaps{subI};
+%             thisModelSims(:,:,:,subI) = thisRs(:,:,:,modelI);
+%         end
+%         % obtain a pMaps from applying a 1-sided signrank test and also t-test to
+%         % the model similarities:
+%         for x=1:size(thisModelSims,1)
+%             for y=1:size(thisModelSims,2)
+%                 for z=1:size(thisModelSims,3)
+%                     if mask(x,y,z) == 1
+%                         [h p1(x,y,z)] = ttest(squeeze(thisModelSims(x,y,z,:)),0,0.05,'right');
+%                         [p2(x,y,z)] = signrank_onesided(squeeze(thisModelSims(x,y,z,:)));
+%                     else
+%                         p1(x,y,z) = NaN;
+%                         p2(x,y,z) = NaN;
+%                     end
+%                 end
+%             end
+%             disp(x)
+%         end
+%         % apply FDR correction
+%         pThrsh_t = FDRthreshold(p1,0.05,mask);
+%         pThrsh_sr = FDRthreshold(p2,0.05,mask);
+%         p_bnf = 0.05/sum(mask(:));
+%         % mark the suprathreshold voxels in yellow
+%         supraThreshMarked_t = zeros(size(p1));
+%         supraThreshMarked_t(p1 <= pThrsh_t) = 1;
+%         supraThreshMarked_sr = zeros(size(p2));
+%         supraThreshMarked_sr(p2 <= pThrsh_sr) = 1;
+%     end
+% elseif strcmp(userOptions.postprocess, 'FSL')
+%     gotoDir(userOptions.rootPath, 'Maps');
+%     FSL_postprocess(pwd, [userOptions.rootPath '/registration', [userOptions.rootPath '/fnirt'] , [userOptions.rootPath '/masks'], maskName, models, userOptions);
+%     %   FSL_postprocess(Maps_path, warp_path, ref_path, mask_path, maskName, models, userOptions)
+%     cd(returnHere);
+% else
+%     disp('NOT postprocessing')
+% end
 
 
 cd(returnHere);

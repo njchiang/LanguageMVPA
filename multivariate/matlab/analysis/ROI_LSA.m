@@ -76,6 +76,21 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     % %% RDM calculation %%
     % %%%%%%%%%%%%%%%%%%%%%
     % disp(['Starting RSA analysis']);
+    userOptions.distance = 'correlation'
+    userOptions.analysisName = 'tstat_corr';
+    
+%     userOptions.distance = 'mahalanobis';
+% In summary, the easiest way is to calculate your beta values in the 
+% conventional way. Then estimate the GLM residuals (E), and estimate 
+% the covariance of residuals. Finally divide your betas by the estimated 
+% covariance  [this is what I meant by pre-whitening betas]. Then use 
+% Euclidean distance on the whitened betas,which would be the same as 
+% computing Mahalonobis distance. [please refer to alex's paper for the 
+% details]    
+    userOptions.analysisName='tstat_mahalanobis';
+
+    userOptions.distance = 'euclidean';
+    userOptions.analysisName='tstat_euclidean';
     try
         load(['RDMs/' userOptions.analysisName '_RDMs.mat']);
     catch

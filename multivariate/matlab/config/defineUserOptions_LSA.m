@@ -18,7 +18,7 @@ function userOptions = defineUserOptions_LSA()
 %% Project details
 
 % This name identifies a collection of files which all belong to the same run of a project.
-userOptions.analysisName = 'Compute';
+userOptions.analysisName = 'LSA';
 
 % This is the root directory of the project.
 % userOptions.rootPath = '/space/raid5/data/monti/Analysis/Music/mvpa_data';
