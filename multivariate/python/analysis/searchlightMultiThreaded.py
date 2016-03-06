@@ -20,10 +20,10 @@ outPath = os.path.join(projectDir, "Maps", "PyMVPA")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
-# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-#            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010"]
-           # "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
+subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
+           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+# subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010", "LMVPA009"]
+#            "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
 # subList = ["LMVPA010"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
@@ -41,7 +41,6 @@ clf = LinearNuSVMC()
 # cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t))
 # note: this calculates error, and flips is back.
 cv = CrossValidation(clf, NFoldPartitioner())
-# 9mm radius searchlight
 # sl = sphere_searchlight(cv, radius=4, postproc=mean_sample())
 # cvSL = sphere_searchlight(cv, radius=4)
 attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
@@ -61,28 +60,25 @@ if cont != 'y':
 else:
     print "Running searchlight analysis... "
 
-# def run_cv_sl(threadName, sl, ds):
-
-# need to be fixed, I think it writes all of the samples instead of the mean
-
 
 def error2acc(d):
     d.samples *= -1
     d.samples += 1
     return d
 
+
 def run_cv_sl(sl, ds, t):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
-    zscore(ds)
+    zscore(fds)
     wsc_start_time = time.time()
-    print "running " + str(t) + "at" + str(wsc_start_time)
+    print "running " + str(t) + " at " + time.strftime("%H:%M:%S")
     thisSL = sl
-    res = thisSL(ds)
+    res = thisSL(fds)
     print "done in " + str((time.time() - wsc_start_time,)) + " seconds"
     res = error2acc(res)
     map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
 
-# these need to be fixed... I think it writes all of the samples instead of the mean
+
 def run_splitcv_sl(sl, ds, t):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     ids = fds[0:16, :]
@@ -97,6 +93,7 @@ def run_splitcv_sl(sl, ds, t):
     res = thisSL(ads)
     res = error2acc(res)
     map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_cvsl.nii.gz'))
+
 
 def run_cc_sl(sl, ds):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
