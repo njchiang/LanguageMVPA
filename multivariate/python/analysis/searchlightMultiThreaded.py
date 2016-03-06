@@ -20,10 +20,10 @@ outPath = os.path.join(projectDir, "Maps", "PyMVPA")
 
 # initialize subjects, masks, contrast
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-# subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010",
-#            "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
+# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
+#            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010",
+           "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
 # subList = ["LMVPA001"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
@@ -77,6 +77,7 @@ def run_cv_sl(sl, ds, t):
     print "running " + str(t)
     thisSL = sl
     res = thisSL(ds)
+    print "done with " + str(t)
     res = error2acc(res)
     map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
 
