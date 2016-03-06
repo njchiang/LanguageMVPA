@@ -22,10 +22,12 @@ outPath = os.path.join(projectDir, "Maps", "PyMVPA")
 contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+# subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010",
+#            "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
 # subList = ["LMVPA001"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
-con = contrasts[1]
+con = contrasts[4]
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -72,6 +74,7 @@ def error2acc(d):
 def run_cv_sl(sl, ds, t):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     zscore(ds)
+    print "running " + str(t)
     thisSL = sl
     res = thisSL(ds)
     res = error2acc(res)
