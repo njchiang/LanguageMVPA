@@ -23,8 +23,8 @@ contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_a
 subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
            "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
 # subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010", "LMVPA009"]
-#            "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
-# subList = ["LMVPA010"]
+           # "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
+# subList = ["LMVPA007"]
 maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
 mask = maskList[4]
 con = contrasts[1]
