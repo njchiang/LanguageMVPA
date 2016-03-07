@@ -96,13 +96,13 @@ all_conds={ ...
 i = 1;
 for semantics = 1:8
     for syntax = 1:4
-        betas(semantics,syntax).identifier=all_conds{i};
+        betas(syntax,semantics).identifier=all_conds{i};
         i = i+1;
     end
 end
 for semantics = 9:16
     for syntax = 1:4
-        betas(semantics,syntax).identifier = all_conds{i};
+        betas(syntax,semantics).identifier = all_conds{i};
         i = i+1;
     end
 end

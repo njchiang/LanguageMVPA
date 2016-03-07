@@ -31,8 +31,11 @@ gotoDir(userOptions.rootPath);
 % %%%%%%%%%%%%%%%%%%%%%%
 % % load data and masks
 % fullBrainVols=fMRIDataPreparation(betaCorrespondence_LSA(), userOptions);
+% fullBrainVols=fMRIDataPreparation(betaCorrespondence_avg(), userOptions);
 % binaryMasks_nS = fMRIMaskPreparation(userOptions);
 % responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_LSA(), userOptions);
+% responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_avg_semantics(), userOptions);
+% responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_avg_syntax(), userOptions);
 % clear fullBrainVols binaryMasks_nS
 
 
@@ -76,9 +79,10 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     % %% RDM calculation %%
     % %%%%%%%%%%%%%%%%%%%%%
     % disp(['Starting RSA analysis']);
-    userOptions.distance = 'correlation'
+    userOptions.distance = 'correlation';
     userOptions.analysisName = 'tstat_corr';
-    
+    load('D:\fmri\LanguageMVPA\ImageData\Averaged_responsePatterns.mat')
+ 
 %     userOptions.distance = 'mahalanobis';
 % In summary, the easiest way is to calculate your beta values in the 
 % conventional way. Then estimate the GLM residuals (E), and estimate 
@@ -90,7 +94,10 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     userOptions.analysisName='tstat_mahalanobis';
 
     userOptions.distance = 'euclidean';
-    userOptions.analysisName='tstat_euclidean';
+    userOptions.analysisName='tstat_syntax_euclidean';
+% the averaged one is a little weird-- there are 16 semantics conditions
+% (sentence and picture) but only 4 syntax. so if doing syntax, need to
+% remove the picture trials.
     try
         load(['RDMs/' userOptions.analysisName '_RDMs.mat']);
     catch

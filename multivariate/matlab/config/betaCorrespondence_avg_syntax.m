@@ -100,8 +100,8 @@ for semantics = 1:8
         i = i+1;
     end
 end
-for semantics = 9:16
-    for syntax = 1:4
+for semantics = 1:8
+    for syntax = 5:8
         betas(semantics,syntax).identifier = all_conds{i};
         i = i+1;
     end
