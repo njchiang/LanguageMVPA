@@ -2,6 +2,7 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # using the chunks to do cross-classification.
+import sys
 sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *
 import lmvpautils as lmvpa
@@ -13,7 +14,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths()
 # mask = maskList[4]
 # con = contrasts[5]
 mask = "grayMatter"
-con = "syntax"
+con = "anim"
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -22,13 +23,13 @@ else:
     slInt = 1
 
 # initialize labels and classifier
-if len(con) > 1:
-    print "Running RSA"
-    clf = lmvpa.initrsa(con)
-else:
-    print "Running SVM"
-    attr = SampleAttributes(os.path.join(paths[4], (con + "_attribute_literal_labels.txt")))
-    clf = LinearNuSVMC()
+# if len(con) > 1:
+#     print "Running RSA"
+#     clf = lmvpa.initrsa(con)
+# else:
+#     print "Running SVM"
+attr = SampleAttributes(os.path.join(paths[4], (con + "_attribute_literal_labels.txt")))
+clf = LinearNuSVMC()
 # clf=RbfNuSVMC()
 cv = CrossValidation(clf, NFoldPartitioner())
 
@@ -80,7 +81,6 @@ def run_cc_sl(sl, ds):
 print "Loaded class descriptions... Let's go!"
 for i in range(0, len(subList)):
     sub = subList[i]
-    print sub
     fullSet = lmvpa.loadsub(paths, sub, m=mask, a=attr)
     if slInt == 1:
         cvSL = sphere_searchlight(cv, radius=2, postproc=mean_sample())
