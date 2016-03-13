@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *
+import lmvpautils as lmvpa
 import os
+
 print "Initializing..."
 # initialize paths
-projectDir="D:\\fmri\\LanguageMVPA"
-codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
-betaType = "tstat"  # tstat cope orig
-betaPath = os.path.join(projectDir, "betas", betaType)
-maskPath = os.path.join(projectDir, "masks", "sub")
-labelPath = os.path.join(codeDir, "labels")
-outPath = os.path.join(projectDir, "Maps")
+paths, subList, contrasts, maskList = lmvpa.initpaths()
 nVox = 100
 # initialize subjects, masks, contrast
-contrasts = ["verb", "syntax", "anim",  "ActPass", "RelCan", "stimtype", "cross_anim", "cross_verb"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-# subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009"]
-# subList = ["LMVPA010", "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-# subList = ["testv2"]
-maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "langNet", "lSemantics",
-            "lSyntax", "grayMatter", "left_angular"]
 mask = maskList[0]
 con = contrasts[1]
 dsType = "Lang"
@@ -62,17 +51,12 @@ def initCV(nf):
 # load the data
 def loadSubData(m, c, t):
     # subFileName = os.path.join(betaPath, t + "_" + m + "_" + c + ".nii.gz")
-    cv_attr = SampleAttributes(os.path.join(labelPath, (c + "_attribute_labels.txt")))
+    cv_attr = SampleAttributes(os.path.join(paths[4], (c + "_attribute_labels.txt")))
     d = []
     for i in range(0, len(subList)):
         sub = subList[i]
         print sub
-        bSeriesName = str(sub + "_LSA_Series.nii.gz")
-        maskName = str(sub + "_" + mask + ".nii.gz")
-        bSeries = os.path.join(betaPath, bSeriesName)
-        maskFile = os.path.join(maskPath, maskName)
-        print "loading files..."
-        tmp = (fmri_dataset(samples=bSeries, targets=cv_attr.targets, chunks=cv_attr.chunks, mask=maskFile))
+        tmp = lmvpa.loadsub(paths, sub, m=mask, a=cv_attr)
         if dsType == "Lang":
             d.append(tmp[0:32])
         elif dsType == "Pic":

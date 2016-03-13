@@ -2,48 +2,35 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # using the chunks to do cross-classification.
+sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *
+import lmvpautils as lmvpa
 import os
-import threading
-import Queue
 
-# maybe i should detrend...
-# INITIALIZING
-print "Initializing..."
-# initialize paths
-projectDir="D:\\fmri\\LanguageMVPA"
-codeDir="D:\GitHub\LanguageMVPA\multivariate\python"
-betaPath = os.path.join(projectDir, "betas", "cope")
-maskPath = os.path.join(projectDir, "masks", "sub")
-labelPath = os.path.join(codeDir, "labels")
-outPath = os.path.join(projectDir, "Maps", "PyMVPA")
+paths, subList, contrasts, maskList = lmvpa.initpaths()
 
 # initialize subjects, masks, contrast
-contrasts = ["verb", "syntax", "anim", "stimtype", "ActPass", "RelCan", "cross_anim", "cross_verb"]
-subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
-           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
-# subList = ["LMVPA019", "LMVPA018", "LMVPA017", "LMVPA016", "LMVPA015", "LMVPA014", "LMVPA013", "LMVPA011", "LMVPA010", "LMVPA009"]
-           # "LMVPA009", "LMVPA008", "LMVPA007", "LMVPA006", "LMVPA005", "LMVPA003", "LMVPA002", "LMVPA001"]
-# subList = ["LMVPA007"]
-maskList = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
-mask = maskList[4]
-con = contrasts[5]
+# mask = maskList[4]
+# con = contrasts[5]
+mask = "grayMatter"
+con = "syntax"
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
 else:
     slType = "cross validation"
     slInt = 1
-# initialize classifier
-clf = LinearNuSVMC()
+
+# initialize labels and classifier
+if len(con) > 1:
+    print "Running RSA"
+    clf = lmvpa.initrsa(con)
+else:
+    print "Running SVM"
+    attr = SampleAttributes(os.path.join(paths[4], (con + "_attribute_literal_labels.txt")))
+    clf = LinearNuSVMC()
 # clf=RbfNuSVMC()
-# cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
-# cv = CrossValidation(clf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t))
-# note: this calculates error, and flips is back.
 cv = CrossValidation(clf, NFoldPartitioner())
-# sl = sphere_searchlight(cv, radius=4, postproc=mean_sample())
-# cvSL = sphere_searchlight(cv, radius=4)
-attr = SampleAttributes(os.path.join(labelPath, (con + "_attribute_labels.txt")))
 
 # make sure everything is okay.
 configMessage = "Searchlight type: " + slType \
@@ -79,22 +66,6 @@ def run_cv_sl(sl, ds, t):
     map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
 
 
-def run_splitcv_sl(sl, ds, t):
-    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
-    ids = fds[0:16, :]
-    zscore(ids)
-    thisSL = sl
-    res = thisSL(ids)
-    res = error2acc(res)
-    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_inanim_' + con + '_' + t + '_cvsl.nii.gz'))
-    ads = ds[16:32, :]
-    zscore(ads)
-    thisSL = sl
-    res = thisSL(ads)
-    res = error2acc(res)
-    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_cvsl.nii.gz'))
-
-
 def run_cc_sl(sl, ds):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
     zscore(fds)
@@ -110,13 +81,7 @@ print "Loaded class descriptions... Let's go!"
 for i in range(0, len(subList)):
     sub = subList[i]
     print sub
-    bSeriesName = str(sub + "_LSA_Series.nii.gz")
-    bSeries = os.path.join(betaPath, bSeriesName)
-    maskName = str(sub+"_"+mask+".nii.gz")
-    maskFile = os.path.join(maskPath, maskName)
-    fullSet = fmri_dataset(samples=bSeries, targets=attr.targets, chunks=attr.chunks, mask=maskFile)
-    del(bSeries, bSeriesName, maskName, maskFile)
-
+    fullSet = lmvpa.loadsub(paths, sub, m=mask, a=attr)
     if slInt == 1:
         cvSL = sphere_searchlight(cv, radius=2, postproc=mean_sample())
         lFds = fullSet[0:32, :]
@@ -136,7 +101,27 @@ for i in range(0, len(subList)):
 
 print "Finished!\n"
 
+
 """
+#deprecated... don't run this
+def run_splitcv_sl(sl, ds, t):
+    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
+    ids = fds[0:16, :]
+    zscore(ids)
+    thisSL = sl
+    res = thisSL(ids)
+    res = error2acc(res)
+    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_inanim_' + con + '_' + t + '_cvsl.nii.gz'))
+    ads = ds[16:32, :]
+    zscore(ads)
+    thisSL = sl
+    res = thisSL(ads)
+    res = error2acc(res)
+    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(outPath, sub + '_' + mask + '_anim_' + con + '_' + t + '_cvsl.nii.gz'))
+"""
+"""
+import threading
+import Queue
 class CVThread(threading.Thread):
     def __init__(self, threadID, name, sl, ds):
         threading.Thread.__init__(self)

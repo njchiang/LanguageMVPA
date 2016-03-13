@@ -108,6 +108,7 @@ plot_mtx(squareform(slres.samples[:, mean_consistency.argmax()]),
          'Most consistent searchlight pattern correlation distances')
 
 
+""" THIS IS THE ONE WE WANT """
 # let's see where in the brain we find dissimilarity structures that are
 # similar to our most stable one
 tdsm = rsa.PDistTargetSimilarity(
