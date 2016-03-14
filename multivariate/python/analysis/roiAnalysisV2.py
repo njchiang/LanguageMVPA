@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+import sys
 sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *
 import lmvpautils as lmvpa
@@ -16,17 +17,6 @@ con = contrasts[1]
 dsType = "Lang"
 # dsType = "Pic"
 
-if 'cross' in con:
-    slType = "cross classification"
-    slInt = 0
-    dsType = "Full"
-elif con == "stimtype":
-    dsType = "Full"
-    sInt = 1
-    slType = "cross validation"
-else:
-    slType = "cross validation"
-    slInt = 1
 
 # initialize the classifier
 def initCV(nf):
@@ -91,6 +81,17 @@ def runWSRoi(fullDataset):
         del tmp
     return wsc_results
 
+if 'cross' in con:
+    slType = "cross classification"
+    slInt = 0
+    dsType = "Full"
+elif con == "stimtype":
+    dsType = "Full"
+    sInt = 1
+    slType = "cross validation"
+else:
+    slType = "cross validation"
+    slInt = 1
 
 # make sure everything is okay.
 configMessage = "Analysis type: " + slType \
