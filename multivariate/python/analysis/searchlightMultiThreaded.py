@@ -14,7 +14,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths()
 # mask = maskList[4]
 # con = contrasts[5]
 mask = "grayMatter"
-con = "ActPass"
+con = "RelCan"
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0

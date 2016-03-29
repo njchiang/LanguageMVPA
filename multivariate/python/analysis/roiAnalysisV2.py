@@ -10,28 +10,32 @@ import os
 print "Initializing..."
 # initialize paths
 paths, subList, contrasts, maskList = lmvpa.initpaths()
-nVox = 100
+subList = ["LMVPA001", "LMVPA002", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
+           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+# nVox = 100
 # initialize subjects, masks, contrast
-mask = maskList[0]
-con = contrasts[1]
+mask = "lang_semantics_left_IFG"
+con = "verb"
 dsType = "Lang"
 # dsType = "Pic"
 
 
 # initialize the classifier
-def initCV(nf):
+# def initCV(nf):
+def initCV():
     # initialize classifier
     # clf = LinearCSVMC()
     clf = LinearNuSVMC()
     # clf = RbfNuSVMC()
-    # feature selection helpers
-    fselector = FixedNElementTailSelector(nf, tail='upper',
-                                          mode='select',sort=False)
-    sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
-                                            enable_ca=['sensitivities'])
+    # feature selection helpers*
+    # fselector = FixedNElementTailSelector(nf, tail='upper',
+    #                                       mode='select',sort=False)
+    # sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
+    #                                         enable_ca=['sensitivities'])
     # create classifier with automatic feature selection
-    fsclf = FeatureSelectionClassifier(clf, sbfs)
-    cv = CrossValidation(fsclf,
+    # fsclf = FeatureSelectionClassifier(clf, sbfs)
+    # cv = CrossValidation(fsclf,
+    cv = CrossValidation(clf,
                          NFoldPartitioner(attr='chunks'),
                          errorfx=mean_match_accuracy)
     # cv = CrossValidation(fclf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
@@ -45,7 +49,7 @@ def loadSubData(m, c, t):
     d = []
     for i in range(0, len(subList)):
         sub = subList[i]
-        print sub
+        # print sub
         tmp = lmvpa.loadsub(paths, sub, m=mask, a=cv_attr)
         if dsType == "Lang":
             d.append(tmp[0:32])
@@ -64,7 +68,7 @@ def runWSRoi(fullDataset):
         sd.sa['subject'] = np.repeat(i, len(sd))
     _ = [zscore(ds) for ds in fullDataset]
     wsc_start_time = time.time()
-    cv = initCV(nVox)
+    cv = initCV()
     wsc_results = [cv(j) for j in fullDataset]
     wsc_results = vstack(wsc_results)
     print "done in " + str((time.time() - wsc_start_time,)) + " seconds"
