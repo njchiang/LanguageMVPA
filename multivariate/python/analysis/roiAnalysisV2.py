@@ -10,14 +10,13 @@ import os
 print "Initializing..."
 # initialize paths
 paths, subList, contrasts, maskList = lmvpa.initpaths()
-subList = ["LMVPA001", "LMVPA002", "LMVPA005", "LMVPA006", "LMVPA008", "LMVPA009", "LMVPA010",
-           "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
+
 # nVox = 100
 # initialize subjects, masks, contrast
-mask = "lang_semantics_left_IFG"
+mask = "pic_semantics_langNet"
 con = "verb"
-dsType = "Lang"
-# dsType = "Pic"
+# dsType = "Lang"
+dsType = "Pic"
 
 
 # initialize the classifier
@@ -51,12 +50,14 @@ def loadSubData(m, c, t):
         sub = subList[i]
         # print sub
         tmp = lmvpa.loadsub(paths, sub, m=mask, a=cv_attr)
-        if dsType == "Lang":
-            d.append(tmp[0:32])
-        elif dsType == "Pic":
-            d.append(tmp[32:64])
-        else:
-            d.append(tmp)
+        if tmp.shape[1] > 0:
+            print "added"
+            if dsType == "Lang":
+                d.append(tmp[0:32])
+            elif dsType == "Pic":
+                d.append(tmp[32:64])
+            else:
+                d.append(tmp)
     # h5save(subFileName, d)
     return d
 
