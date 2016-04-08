@@ -2,10 +2,16 @@
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 import sys
-sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
-from mvpa2.suite import *
+sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
+sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+import mvpa2.clfs as clfs
+from mvpa2.measures.base import CrossValidation
+from mvpa2.misc.io import SampleAttributes
 import lmvpautils as lmvpa
+import ridge as ridge
 import os
+import numpy as np
+from sklearn import linear_model
 
 print "Initializing..."
 # initialize paths
@@ -13,7 +19,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths()
 
 # nVox = 100
 # initialize subjects, masks, contrast
-mask = "pic_semantics_langNet"
+mask = "left_STG_post"
 con = "cross_anim"
 # dsType = "Lang"
 dsType = "Pic"
@@ -25,13 +31,15 @@ def initdecoder():
     # initialize classifier
     # this part is deprecated...
     # rather than predicting voxels based on features.
-    clf = RidgeReg()
-    cv = CrossValidation(clf, NFoldPartitioner(attr='chunks'), errorfx=corr_error_prob)
+    c = clfs.ridge.RidgeReg()
+    cv = CrossValidation(c, clfs.meta.NFoldPartitioner(attr='chunks'), errorfx=corr_error_prob)
     return cv
 
-# def runencoder(d,f):
-#     for i in np.arange(d.samples.shape[1]):
-
+def runencoder(d,f):
+    alphas = np.logspace(0, 3, 20)
+    ridge.ridge_corr(d.targets, d.targes, d.samples, d.samples, alphas)
+    # determine the best alpha...
+    # c = linear_model.Ridge() sklearn option
 
 # load the data
 def loadSubData(m, c, t):
@@ -94,7 +102,7 @@ ds_all = loadSubData(mask, con, dsType)
 
 print "Running " + dsType + " dataset"
 res = [runWSRoi(d) for d in ds_all]
-wsc_results = vstack(res)
+wsc_results = np.vstack(res)
 
 """plan
 make a new ds_copy that has the voxel activity as "targets", and the features as samples. then can train...
