@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
+# this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
+# because we're using an encoding model.
 import sys
 sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *
@@ -32,6 +34,8 @@ def initCV():
     # sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
     #                                         enable_ca=['sensitivities'])
     # create classifier with automatic feature selection
+    # c = RidgeReg()
+    # cv = CrossValidation(c, part.NFoldPartitioner(attr='chunks'), errorfx=errorfx.corr_error_prob)
     # fsclf = FeatureSelectionClassifier(clf, sbfs)
     # cv = CrossValidation(fsclf,
     cv = CrossValidation(clf,
