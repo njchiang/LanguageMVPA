@@ -24,7 +24,7 @@ subData = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
            "LMVPA019": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"]
            # "LMVPA020": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"]
            }
-subData = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"]}
+# subData = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"]}
 
 # projectDir = os.path.join(rootDir, 'CloudStation', 'scratchpad',
 

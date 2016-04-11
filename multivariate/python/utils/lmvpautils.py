@@ -64,7 +64,9 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
     efn = pjoin(p[0], 'data', s, 'func', s + '_' + r + '.tsv')
     fe = bids.load_events(efn, 0)
     e = adjustevents(fe, c)
-    bfn = pjoin(p[0], 'data', s, 'func', 'extra', s+'_'+r+'_mc.nii.gz')
+    # bfn = pjoin(p[0], 'data', s, 'func', 'extra', s+'_'+r+'_mc.nii.gz')
+    # motion corrected and coregistered
+    bfn = pjoin(p[0], 'data', s, 'func', s+'_'+r+'.nii.gz')
     if m is not None:
         m = pjoin(p[0], 'data', s, 'masks', s+'_'+m+'.nii.gz')
         d = fmri_dataset(bfn, chunks=int(r.split('n')[1]), mask=m)
