@@ -1,7 +1,29 @@
 #!/bin/bash
 :<<doc
-The new and improved preprocessing for an encoding model analysis. Minimal preprocessing is done. Really just deleting volumes and preprocessing.
+registers each run to the example_func!
 doc
+
+projectDir=/Volumes/fmri/LanguageMVPA/data
+for i in 001 002 003 005 006 007 008 009 010 011 013 014 015 016 017 018 019
+do
+	s=LMVPA${i}
+	echo ${s}
+	cd ${projectDir}/${s}/func/extra
+	for scan in ${s}_*_mc.nii.gz
+	do
+		r=`echo ${scan} | cut -d '_' -f2`
+		if [[ "$r" == "Run1" ]] 
+		then
+			cp ${scan} ../${s}_${r}.nii.gz
+		else
+			flirt -in ${scan} -ref example_func.nii.gz -out ../${s}_${r}.nii.gz -applyxfm -init ../../reg/${r}_to_1.mat
+		fi
+	done
+done	
+
+
+:<<func
+# The new and improved preprocessing for an encoding model analysis. Minimal preprocessing is done. Really just deleting volumes and preprocessing.
 
 projectDir=/space/raid5/data/monti/Analysis/LanguageMVPA
 
@@ -20,3 +42,4 @@ do
 
   done
 done
+func
