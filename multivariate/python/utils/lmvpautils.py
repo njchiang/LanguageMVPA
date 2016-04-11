@@ -4,12 +4,17 @@
 def initpaths():
     print "Initializing..."
     import os
+    import sys
     p = []
-    p.append("D:\\fmri\\LanguageMVPA")
-    p.append("D:\GitHub\LanguageMVPA\multivariate\python")
-    p.append(os.path.join(p[0], "betas", "tstat"))
-    p.append(os.path.join(p[0], "masks", "sub"))
-    p.append(os.path.join(p[1], "labels"))
+
+    if sys.platform == 'win32':
+        p.append("D:\\fmri\\LanguageMVPA")
+        p.append("D:\GitHub\LanguageMVPA\multivariate\python")
+    else:
+        # p.append('/Volumes/fmri/LanguageMVPA')
+        p.append('Volumes/JEFF/UCLA/LMVPA/')
+        p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
+
     p.append(os.path.join(p[0], "Maps", "PyMVPA"))
     c = ["stim", "verb", "anim", "AP", "CR", "syntax"]
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
@@ -41,10 +46,12 @@ def loadsubbetas(p, s, m="grayMatter", a=0):
     # load subject data with paths list, s: sub, c: contrast, m: mask
     print s
     import os
+    bsp = os.path.join(p[0], "betas", "tstat")
     bsn = str(s + "_LSA_Series.nii.gz")
-    bs = os.path.join(p[2], bsn)
+    bs = os.path.join(bsp, bsn)
     mn = str(s+"_"+m+".nii.gz")
-    mf = os.path.join(p[3], mn)
+    mnp = os.path.join(p[0], "data", s, "masks")
+    mf = os.path.join(mnp, mn)
     from mvpa2.datasets.mri import fmri_dataset
     if a != 0:
         return fmri_dataset(samples=bs, targets=a.targets, chunks=a.chunks, mask=mf)
