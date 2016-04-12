@@ -96,7 +96,10 @@ def adjustevents(e, c='trial_type'):
         # rounding for now, ONLY because that works for this dataset.
         ee = []
         for i, d in enumerate(e):
-            ee.append({'onset': np.round(d['onset']), 'duration': np.round(d['duration']), 'condition': d[c], 'intensity': 1})
+            ee.append({'onset': np.round(d['onset']),
+                       'duration': np.round(d['duration']),
+                       'condition': d[c],
+                       'intensity': 1})
         return ee
 
 
