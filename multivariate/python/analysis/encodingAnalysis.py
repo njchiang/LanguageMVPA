@@ -4,7 +4,8 @@
 # this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
 # because we're using an encoding model.
 """Encoding analysis: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
-then..."""
+then...
+todo: add ridge regression, maybe try crossmodal classification"""
 import sys
 import numpy as np
 # initialize stuff
