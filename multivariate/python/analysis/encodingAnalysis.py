@@ -23,7 +23,7 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 
 ######### for testing
-sub = 'LMVPA002'
+sub = 'LMVPA001'
 # ds = ds_all[sub]
 # from mvpa2.datasets.miscfx import summary
 # print summary(ds)
@@ -61,9 +61,10 @@ for sub in subList.keys():
         for ev in beta_events[sub][i]:
             ev['chunks'] = thisDS.sa['chunks'].unique[i]
             ev['onset'] += TR*idx
-            # ev['targets'] = ev['condition']
+            ev['targets'] = ev['condition']
             del ev['intensity']
-            events.append(ev)
+            if ev['duration'] is not '0':
+                events.append(ev)
         idx += np.sum(thisDS.sa['chunks'].value == thisDS.sa['chunks'].unique[i])
 
     # # regress, getting timing data from dataset
