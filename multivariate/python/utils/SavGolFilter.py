@@ -165,7 +165,7 @@ class SavGolFilterMapper(Mapper):
             mds = ds
         else:
             # shallow copy to put the new stuff in
-            mds = ds.copy(deep=False)
+            mds = ds.copy()
         regs = self._regs
         # regression for each feature, but need to get the corresponding feature for each voxel...
         """ is this crap even necessary if i have the filtered data? do you just subtract?
@@ -218,4 +218,5 @@ def sg_filter(ds, *args, **kwargs):
     # map
     mapped = dm.forward(ds)
     # and append the mapper to the dataset
-    mapped._append_mapper(dm)
+    # mapped._append_mapper(dm)
+    #  for now it's not appended... but just keep that in mind.
