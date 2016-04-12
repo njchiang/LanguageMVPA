@@ -3,6 +3,8 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
 # because we're using an encoding model.
+"""V2.0: using betas extracted with FSL. this differs from V3 in that the preprocessing is different.
+ Spatial smoothing: 5mm, hpf 100s, LSA extraction using FSL"""
 import sys
 sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
 from mvpa2.suite import *

@@ -3,8 +3,8 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
 # because we're using an encoding model.
-"""Encoding analysis: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
-then..."""
+"""V3.0: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
+runs a beta extraction for each trial, subs in the corresponding labels and classifies."""
 import sys
 import numpy as np
 # initialize stuff
@@ -80,9 +80,49 @@ for sub in subList.keys():
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)
 
-    fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
-    fds = fds[fds.sa.targets != '0'] # remove the probes
+    # # # regress, getting timing data from dataset
+    # events2 = er.find_events(targets=thisDS.sa.targets, chunks=thisDS.sa.chunks)
+    # # # events = [ev for ev in events if ev['targets'] not in ['rest']]
+    # #
+    # # # convert onsets and durations into timestamps
+    # for ev in events2:
+    #     ev['onset'] *= TR
+    #     ev['duration'] *= TR
+    #
+    # events2 = [ev for ev in events2 if ev['targets'] != 'rest']
+    # evds2 = er.fit_event_hrf_model(thisDS, events2, time_attr='time_coords',
+    #                               condition_attr=('targets', 'chunks'),
+    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+    #                               return_model=True)
+    # or, use nipy to generate design matrix and feed into ridge regression
 
-    # prototyping
-    # from nipy.modalities.fmri.design_matrix import make_dmtx
-    # make_dmtx(frametimes, paradigm=None, hrf_model='canonical', drift_model='cosine', hfcut=128, drift_order=1, fir_delays=[0], add_regs=None, add_reg_names=None, min_onset=-24)
+    fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
+
+    fds = fds[fds.sa.targets != '0']
+
+    # split data into language and pictures
+    from mvpa2.base import dataset
+    lfds = [fds[fds.sa['chunks'].value == fds.sa['chunks'].unique[i]]
+            for i in np.arange(len(fds.sa['chunks'].unique)/2)]
+    lfds = dataset.vstack(lfds)
+
+    pfds = [fds[fds.sa['chunks'].value == fds.sa['chunks'].unique[i]]
+            for i in np.arange(len(fds.sa['chunks'].unique) / 2, len(fds.sa['chunks'].unique))]
+    pfds = dataset.vstack(pfds)
+
+
+    from mvpa2.clfs import svm
+    clf = svm.LinearCSVMC()
+    from mvpa2.measures.base import CrossValidation
+    from mvpa2.generators.partition import NFoldPartitioner
+    from mvpa2.misc import errorfx
+    cv = CrossValidation(clf,
+                         NFoldPartitioner(attr='chunks'),
+                         errorfx=errorfx.mean_match_accuracy)
+    cv.untrain()
+    lres = cv(lfds)
+    print "language: " + str(np.mean(lres.samples))
+    cv.untrain()
+    pres = cv(pfds)
+    print "pictures: " + str(np.mean(pres.samples))
+
