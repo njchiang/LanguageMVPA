@@ -1,20 +1,8 @@
 # utility functions used throughout lmvpa project
+
 def initpaths(platform):
     print "Initializing..."
     import os
-<<<<<<< HEAD
-    import sys
-    p = []
-
-    if sys.platform == 'win32':
-        p.append("D:\\fmri\\LanguageMVPA")
-        p.append("D:\GitHub\LanguageMVPA\multivariate\python")
-    else:
-        # p.append('/Volumes/fmri/LanguageMVPA')
-        p.append('Volumes/JEFF/UCLA/LMVPA/')
-        p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
-
-=======
     import numpy as np
     p = []
     if 'win' in platform:
@@ -28,14 +16,13 @@ def initpaths(platform):
         p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
 
     p.append(os.path.join(p[1], "labels"))
->>>>>>> origin/encoding-model
     p.append(os.path.join(p[0], "Maps", "PyMVPA"))
     # c = ["stim", "verb", "anim", "AP", "CR", "syntax"]
 
-    tmpc=np.loadtxt(os.path.join(p[1], 'labels', 'conds_key.txt'), dtype=str)
-    c={}
+    tmpc = np.loadtxt(os.path.join(p[1], 'labels', 'conds_key.txt'), dtype=str)
+    c = {}
     for i, name in enumerate(tmpc[0, :]):
-        c[name] = tmpc[1:,i]
+        c[name] = tmpc[1:, i]
 
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
@@ -67,18 +54,11 @@ def loadsubbetas(p, s, m="grayMatter", a=0):
     # load subject data with paths list, s: sub, c: contrast, m: mask
     print s
     import os
-    bsp = os.path.join(p[0], "betas", "tstat")
     bsn = str(s + "_LSA_Series.nii.gz")
-<<<<<<< HEAD
-    bs = os.path.join(bsp, bsn)
-    mn = str(s+"_"+m+".nii.gz")
-    mnp = os.path.join(p[0], "data", s, "masks")
-=======
     bsp = os.path.join(p[0], "betas", "tstat")
     bs = os.path.join(bsp, bsn)
-    mnp = os.path.join(p[0], s, "masks")
+    mnp = os.path.join(p[0], "data", s, "masks")
     mn = str(s+"_"+m+".nii.gz")
->>>>>>> origin/encoding-model
     mf = os.path.join(mnp, mn)
     from mvpa2.datasets.mri import fmri_dataset
     if a != 0:
@@ -121,7 +101,6 @@ def adjustevents(e, c='trial_type'):
 
 
 def replacetargets(d, ckey, c='trial_type'):
-
     import numpy as np
     if c in ckey:
         d.targets = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.targets]

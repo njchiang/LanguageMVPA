@@ -10,10 +10,10 @@ if sys.platform == 'darwin':
 else:
     plat = 'win'
 
-plat = 'usb'
+# plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
-subjs = {'LMVPA002': subList['LMVPA002']}
+subjs = {'LMVPA003': subList['LMVPA003']}
 # load things in as trial type for easy regression, then swap out labels accordingly
 ds_all = lmvpa.loadsubdata(paths, subjs, m='left_IFG_operc', c='trial_type')
 mc_params = lmvpa.loadmotionparams(paths, subList)
@@ -21,10 +21,10 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 beta_events = lmvpa.loadevents(paths, subjs, c='trial_type')
 
 ######### for testing
-sub = 'LMVPA002'
-ds = ds_all[sub]
-from mvpa2.datasets.miscfx import summary
-print summary(ds)
+# sub = 'LMVPA002'
+# ds = ds_all[sub]
+# from mvpa2.datasets.miscfx import summary
+# print summary(ds)
 # lmvpa.testsg(ds, 79, 3, 10, c='chunks')
 ###############
 
@@ -32,7 +32,7 @@ print summary(ds)
 for sub in subjs.keys():
 
     # savitsky golay filtering
-    thisDS = ds.copy()
+    thisDS = ds_all[sub].copy()
     import SavGolFilter as sg
     sg.sg_filter(thisDS, 79, 3)
 
@@ -81,6 +81,7 @@ for sub in subjs.keys():
     # or, use nipy to generate design matrix and feed into ridge regression
     # rds = thisDS.copy(deep=False)
     # rds = er.assign_conditionlabels(rds, events, noinfolabel='rest')
+
     evds = er.fit_event_hrf_model(thisDS, events, time_attr='time_coords',
                                   condition_attr=('targets', 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'})
