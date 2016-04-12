@@ -3,16 +3,24 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
 # because we're using an encoding model.
+"""V2.0: using betas extracted with FSL. this differs from V3 in that the preprocessing is different.
+ Spatial smoothing: 5mm, hpf 100s, LSA extraction using FSL"""
 import sys
-sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
+# initialize stuff
+if sys.platform == 'darwin':
+    plat = 'mac'
+    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+else:
+    plat = 'win'
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 from mvpa2.suite import *
 import lmvpautils as lmvpa
 import os
 
 print "Initializing..."
 # initialize paths
-paths, subList, contrasts, maskList = lmvpa.initpaths()
-
+paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
+subList = subList.keys()
 # nVox = 100
 # initialize subjects, masks, contrast
 mask = "pic_semantics_langNet"
@@ -48,12 +56,12 @@ def initCV():
 # load the data
 def loadSubData(m, c, t):
     # subFileName = os.path.join(betaPath, t + "_" + m + "_" + c + ".nii.gz")
-    cv_attr = SampleAttributes(os.path.join(paths[4], (c + "_attribute_labels.txt")))
+    cv_attr = SampleAttributes(os.path.join(paths[1], 'labels', (c + "_attribute_labels.txt")))
     d = []
     for i in range(0, len(subList)):
         sub = subList[i]
         # print sub
-        tmp = lmvpa.loadsub(paths, sub, m=mask, a=cv_attr)
+        tmp = lmvpa.loadsubbetas(paths, sub, m=mask, a=cv_attr)
         if tmp.shape[1] > 0:
             print "added"
             if dsType == "Lang":
