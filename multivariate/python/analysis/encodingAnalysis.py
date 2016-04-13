@@ -17,7 +17,7 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-plat = 'usb'
+# plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
 roi = 'left_IFG_operc'
