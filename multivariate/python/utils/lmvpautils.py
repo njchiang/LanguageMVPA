@@ -257,14 +257,18 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
                      paradigm=paradigm,
                      **design_kwargs)
 
-def corrsig(N, c=None, p=.05):
+def corrsig(N, c=None, p=.95):
     # if c exists, this returns the cutoff
     import numpy as np
     from scipy.stats import t
     if not c is None:
         return t.cdf(c/np.sqrt((1-c**2)/(N-2)), N-2)
     else:
-        return t.ppf(.95, N-2)*np.sqrt(N-2-t.ppf(.95, N-2)**2)
+        print "functionality not implemented yet, please query a correlation"
+        return
+        # tsigsq=t.ppf(p, N-2)**2
+        # a = tsigsq+N-2
+        # return np.sqrt(2*a)/(2*a)
 
 ######################################
 # classification
