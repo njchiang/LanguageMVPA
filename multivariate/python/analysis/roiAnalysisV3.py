@@ -59,23 +59,15 @@ for sub in subList.keys():
 
     # refit events and regress...
     # get timing data from timing files
-    from mvpa2.datasets import eventrelated as er
-    TR = np.median(np.diff(thisDS.sa.time_coords))
-    idx = 0
-    # events are loading wrong...
-    theseEvents =beta_events[sub]
-    events = []
-    for i in np.arange(len(beta_events[sub])):
-        for ev in theseEvents[i]:
-            ev['chunks'] = thisDS.sa['chunks'].unique[i]
-            ev['onset'] += TR*idx
-            ev['targets'] = ev['condition']
-            del ev['intensity']
-            if ev['duration'] is not '0':
-                events.append(ev)
-        idx += np.sum(thisDS.sa['chunks'].value == thisDS.sa['chunks'].unique[i])
+    rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
 
-    evds = er.fit_event_hrf_model(thisDS, events, time_attr='time_coords',
+    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
+                                design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+                                glmfit_kwargs=None, regr_attrs=None)
+
+    import mvpa2.datasets.eventrelated as er
+
+    evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
                                   condition_attr=('targets', 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)

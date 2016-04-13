@@ -144,6 +144,128 @@ def loadmotionparams(p, s):
         res[sub] = np.vstack(mcs)
     return res
 
+def amendtimings(ds, b):
+    from mvpa2.datasets import eventrelated as er
+    import numpy as np
+    TR = np.median(np.diff(ds.sa.time_coords))
+    idx = 0
+    # events are loading wrong...
+    theseEvents = b
+    events = []
+    for i in np.arange(len(b)):
+        for ev in theseEvents[i]:
+            ev['chunks'] = ds.sa['chunks'].unique[i]
+            ev['onset'] += TR*idx
+            ev['targets'] = ev['condition']
+            ev['amplitude'] = ev['intensity']
+            if ev['duration'] is not '0':
+                events.append(ev)
+        idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
+        # not sure i like the +2, but i think it's right.
+        ds.sa.time_coords[ds.sa['chunks'].value == i+2] += ds.sa.time_coords[idx-1] + TR
+    return ds, events
+#####################################
+# regression stuff
+def events2dict(events):
+    evvars = {}
+    for k in events[0]:
+        try:
+            evvars[k] = [e[k] for e in events]
+        except KeyError:
+            raise ValueError("Each event property must be present for all "
+                             "events (could not find '%s')" % k)
+    return evvars
+
+
+def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
+    import copy
+    from nipy.modalities.fmri.design_matrix import make_dmtx
+    import numpy as np
+    # Decide/device condition attribute on which GLM will actually be done
+    if isinstance(condition_attr, basestring):
+        # must be a list/tuple/array for the logic below
+        condition_attr = [condition_attr]
+
+    glm_condition_attr = 'regressor_names'  # actual regressors
+    glm_condition_attr_map = dict([(con, dict()) for con in condition_attr])  #
+    # to map back to original conditions
+    e = copy.deepcopy(e)  # since we are modifying in place
+    for ei in e:
+        if glm_condition_attr in ei:
+            raise ValueError("Event %s already has %s defined.  Should not "
+                             "happen.  Choose another name if defined it"
+                             % (ei, glm_condition_attr))
+        compound_label = ei[glm_condition_attr] = \
+            'glm_label_' + '+'.join(
+                str(ei[con]) for con in condition_attr)
+        # and mapping back to original values, without str()
+        # for each condition:
+        for con in condition_attr:
+            glm_condition_attr_map[con][compound_label] = ei[con]
+
+    evvars = events2dict(e)
+    add_paradigm_kwargs = {}
+    if 'amplitude' in evvars:
+        add_paradigm_kwargs['amplitude'] = evvars['amplitude']
+    # create paradigm
+    if 'duration' in evvars:
+        from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
+        # NiPy considers everything with a duration as a block paradigm
+        paradigm = BlockParadigm(
+            con_id=evvars[glm_condition_attr],
+            onset=evvars['onset'],
+            duration=evvars['duration'])
+    else:
+        from nipy.modalities.fmri.experimental_paradigm \
+            import EventRelatedParadigm
+        paradigm = EventRelatedParadigm(
+            con_id=evvars[glm_condition_attr],
+            onset=evvars['onset'])
+    # create design matrix -- all kinds of fancy additional regr can be
+    # auto-generated
+    if design_kwargs is None:
+        design_kwargs = {}
+
+    if not regr_attrs is None:
+        names = []
+        regrs = []
+        for attr in regr_attrs:
+            regr = ds.sa[attr].value
+            # add rudimentary dimension for easy hstacking later on
+            if regr.ndim < 2:
+                regr = regr[:, np.newaxis]
+            if regr.shape[1] == 1:
+                names.append(attr)
+            else:
+                #  add one per each column of the regressor
+                for i in xrange(regr.shape[1]):
+                    names.append("%s.%d" % (attr, i))
+            regrs.append(regr)
+        regrs = np.hstack(regrs)
+
+        if 'add_regs' in design_kwargs:
+            design_kwargs['add_regs'] = np.hstack((design_kwargs['add_regs'],
+                                                   regrs))
+        else:
+            design_kwargs['add_regs'] = regrs
+        if 'add_reg_names' in design_kwargs:
+            design_kwargs['add_reg_names'].extend(names)
+        else:
+            design_kwargs['add_reg_names'] = names
+
+    return make_dmtx(ds.sa[time_attr].value,
+                     paradigm=paradigm,
+                     **design_kwargs)
+
+def corrsig(N, c=None, p=.05):
+    # if c exists, this returns the cutoff
+    import numpy as np
+    from scipy.stats import t
+    if not c is None:
+        return t.cdf(c/np.sqrt((1-c**2)/(N-2)), N-2)
+    else:
+        return t.ppf(.95, N-2)*np.sqrt(N-2-t.ppf(.95, N-2)**2)
+
 ######################################
 # classification
 def makebinarymodel(l):

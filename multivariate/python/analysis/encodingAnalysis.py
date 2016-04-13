@@ -7,23 +7,25 @@
 then...
 todo: add ridge regression, maybe try crossmodal classification"""
 import sys
-import numpy as np
 # initialize stuff
 if sys.platform == 'darwin':
     plat = 'mac'
     sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+    debug = True
 else:
     plat = 'win'
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
-
+    debug = False
 import lmvpautils as lmvpa
-
-# plat = 'usb'
+plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast='syntax'
+thisContrast = 'syntax'
 roi = 'left_IFG_operc'
-# subList = {'LMVPA001': subList['LMVPA001']}
+if debug:
+    subList = {'LMVPA002': subList['LMVPA002']}
+
 # load things in as trial type for easy regression, then swap out labels accordingly
+# do we actually want to load all data simultaneously? or one brain at a time...
 ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
@@ -31,7 +33,7 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 
 ######### for testing
-# sub = 'LMVPA001'
+sub = 'LMVPA002'
 # ds = ds_all[sub]
 # from mvpa2.datasets.miscfx import summary
 # print summary(ds)
@@ -40,7 +42,6 @@ beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 
     # later this will loop
 for sub in subList.keys():
-
     # savitsky golay filtering
     thisDS = ds_all[sub].copy()
     import SavGolFilter as sg
@@ -60,23 +61,65 @@ for sub in subList.keys():
 
     # refit events and regress...
     # get timing data from timing files
-    from mvpa2.datasets import eventrelated as er
-    TR = np.median(np.diff(thisDS.sa.time_coords))
-    idx = 0
-    # events are loading wrong...
-    theseEvents =beta_events[sub]
-    events = []
-    for i in np.arange(len(beta_events[sub])):
-        for ev in theseEvents[i]:
-            ev['chunks'] = thisDS.sa['chunks'].unique[i]
-            ev['onset'] += TR*idx
-            ev['targets'] = ev['condition']
-            del ev['intensity']
-            if ev['duration'] is not '0':
-                events.append(ev)
-        idx += np.sum(thisDS.sa['chunks'].value == thisDS.sa['chunks'].unique[i])
+    rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
 
-    evds = er.fit_event_hrf_model(thisDS, events, time_attr='time_coords',
+    # now: make timing files for each feature that encompass every timepoint but with different intensities
+    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
+                                design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+                                glmfit_kwargs=None, regr_attrs=None)
+
+    import ridge
+    import numpy as np
+    # estimate alpha via bootstrap
+    """    wt : array_like, shape (N, M)
+        Regression weights for N features and M responses.
+    corrs : array_like, shape (M,)
+        Validation set correlations. Predicted responses for the validation set are obtained using the regression
+        weights: pred = np.dot(Pstim, wt), and then the correlation between each predicted response and each
+        column in Presp is found.
+    alphas : array_like, shape (M,)
+        The regularization coefficient (alpha) selected for each voxel using bootstrap cross-validation.
+    bootstrap_corrs : array_like, shape (A, M, B)
+        Correlation between predicted and actual responses on randomly held out portions of the training set,
+        for each of A alphas, M voxels, and B bootstrap samples.
+    valinds : array_like, shape (TH, B)
+        The indices of the training data that were used as "validation" for each bootstrap sample.
+    """
+    wt, corrs, valphas, allRcorrs, valinds = ridge.bootstrap_ridge(Rstim=desX.matrix[rds.sa['chunks'].value==1],
+                                                                   Rresp=rds.samples[rds.sa['chunks'].value==1],
+                                                                   Pstim=desX.matrix[rds.sa['chunks'].value==2],
+                                                                   Presp=rds.samples[rds.sa['chunks'].value==2],
+                                                                   alphas=np.logspace(0, 3, 20),
+                                                                   nboots=100,
+                                                                   chunklen=4,
+                                                                   nchunks=4,
+                                                                   corrmin=0.2,
+                                                                   joined=None,
+                                                                   singcutoff=1e-10,
+                                                                   normalpha=False,
+                                                                   single_alpha=True,
+                                                                   use_corr=True)
+
+
+    # find the correlations using bootstrapped alpha
+    # corrsbyvoxel = ridge.ridge_corr(Rstim=desX.matrix[rds.sa['chunks'].value==1], # train predictors
+    #                  Pstim=desX.matrix[rds.sa['chunks'].value==2], # test predictors
+    #                  Rresp=rds.samples[rds.sa['chunks'].value==1],  # train patterns
+    #                  Presp=rds.samples[rds.sa['chunks'].value==2],  # test patterns
+    #                  alphas=np.logspace(0, 3, 20),
+    #                  normalpha=False,
+    #                  corrmin = 0.2,
+    #                  use_corr = True,
+    #                  singcutoff = 1e-10) # test alphas
+
+
+    # make designmat. regress for each run and try to predict the other run
+    # need to regress now...
+
+    # normal regression. doesn't use desX from above.
+    # make ridge GLM mapper, modify statsmodels_glm _fit_model
+    import mvpa2.datasets.eventrelated as er
+    evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
                                   condition_attr=('targets', 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)
@@ -84,6 +127,4 @@ for sub in subList.keys():
     fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
     fds = fds[fds.sa.targets != '0'] # remove the probes
 
-    # prototyping
-    # from nipy.modalities.fmri.design_matrix import make_dmtx
-    # make_dmtx(frametimes, paradigm=None, hrf_model='canonical', drift_model='cosine', hfcut=128, drift_order=1, fir_delays=[0], add_regs=None, add_reg_names=None, min_onset=-24)
+
