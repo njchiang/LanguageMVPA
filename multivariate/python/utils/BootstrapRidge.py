@@ -30,6 +30,10 @@ def _assure_consistent_a(ds, oshape):
         ds.fa.set_length_check(shape[1])
 
 
+
+
+
+
 class BootstrapRidge(Mapper):
     """Mapper to combine multiple samples into a single sample.
 
@@ -126,6 +130,7 @@ class BootstrapRidge(Mapper):
         for c in np.arange(len(idx.unique)):
             testidx = idx.value==idx.unique[c]
             trainidx = idx.value!=idx.unique[c]
+            # use dummy variable for Pstima nd Presp, since we just want the weights and alphas to correspond to GLMMapper.
             wt, corrs, valphas, allRcorrs, valinds = ridge.bootstrap_ridge(Rstim=des.matrix[trainidx],
                                                                    Rresp=data[trainidx],
                                                                    Pstim=des.matrix[testidx],
@@ -141,6 +146,7 @@ class BootstrapRidge(Mapper):
                                                                    single_alpha=self._single_alpha,
                                                                    use_corr=self._use_corr)
 
+            # make the x axis regressors, and keep the chunk matrix like in the NiPy Glm Mapper
             samples.append(corrs)
             wts.append(wt)
             alphas.append(valphas)
