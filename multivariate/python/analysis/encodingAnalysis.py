@@ -18,8 +18,8 @@ else:
     debug = False
 import lmvpautils as lmvpa
 import numpy as np
-plat = 'usb'
-debug = True
+# plat = 'usb'
+# debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
 roi = 'left_IFG_operc'
@@ -28,7 +28,7 @@ if debug:
 
 # load things in as trial type for easy regression, then swap out labels accordingly
 # do we actually want to load all data simultaneously? or one brain at a time...
-ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
+# ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
@@ -37,7 +37,7 @@ beta_events = lmvpa.loadevents(paths, subList, c='verb')
 
 
 ######### for testing
-sub = 'LMVPA002'
+# sub = 'LMVPA002'
 # ds = ds_all[sub]
 # from mvpa2.datasets.miscfx import summary
 # print summary(ds)
@@ -92,8 +92,10 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
 
     # later this will loop
 for sub in subList.keys():
+    thisSub={sub: subList[sub]}
+    ds = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+    thisDS=ds[sub]
     # savitsky golay filtering
-    thisDS = ds_all[sub].copy()
     import SavGolFilter as sg
     sg.sg_filter(thisDS, 49, 3)
     # gallant group zscores before regression.
