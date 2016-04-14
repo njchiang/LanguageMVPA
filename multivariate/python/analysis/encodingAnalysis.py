@@ -18,13 +18,13 @@ else:
     debug = False
 import lmvpautils as lmvpa
 import numpy as np
-# plat = 'usb'
+plat = 'usb'
 # debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
-roi = 'left_IFG_operc'
-if debug:
-    subList = {'LMVPA002': subList['LMVPA002']}
+roi = 'grayMatter'
+# if debug:
+#     subList = {'LMVPA002': subList['LMVPA002']}
 
 # load things in as trial type for easy regression, then swap out labels accordingly
 # do we actually want to load all data simultaneously? or one brain at a time...
@@ -33,7 +33,7 @@ if debug:
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
 beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
-beta_events = lmvpa.loadevents(paths, subList, c='verb')
+beta_events = lmvpa.loadevents(paths, subList, c=thisContrast)
 
 
 ######### for testing
@@ -91,16 +91,24 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
 
 
     # later this will loop
+
+
+import copy
+import os
+from mvpa2.datasets.mri import map2nifti
+from mvpa2.mappers.zscore import zscore
+import SavGolFilter as sg
+import mvpa2.datasets.eventrelated as er
 for sub in subList.keys():
     thisSub={sub: subList[sub]}
-    ds = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
-    thisDS=ds[sub]
+    dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+    thisDS=dsdict[sub]
     # savitsky golay filtering
-    import SavGolFilter as sg
+
     sg.sg_filter(thisDS, 49, 3)
     # gallant group zscores before regression.
     # update events data
-    from mvpa2.mappers.zscore import zscore
+
     # zscore w.r.t. rest trials
     # zscore(thisDS, param_est=('targets', ['rest']), chunks_attr='chunks')
     # zscore entire set. if done chunk-wise, there is no double-dipping (since we leave a chunk out at a time).
@@ -123,7 +131,7 @@ for sub in subList.keys():
 
     # GLM
     # normal regression. doesn't use desX from above.
-    import mvpa2.datasets.eventrelated as er
+
     evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
                                   condition_attr=('targets', 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
@@ -134,17 +142,19 @@ for sub in subList.keys():
                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                 glmfit_kwargs=None, regr_attrs=None)
 
-    import copy
+
     lidx=thisDS.chunks<thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
     lds=copy.copy(desX)
     lds.matrix=lds.matrix[lidx]
     lres = runCVBootstrap(rds.copy()[lidx], lds)
     print 'language ' + str(np.mean(lres))
+    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + thisContrast + '_Lridge.nii.gz'))
     pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
     pds = copy.copy(desX)
     pds.matrix = pds.matrix[pidx]
     pres = runCVBootstrap(rds.copy()[pidx], pds)
     print 'pictures: ' + str(np.mean(pres))
+    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + thisContrast + '_Pridge.nii.gz'))
 
     # now can make this happen for cross-modal stuff...
 
