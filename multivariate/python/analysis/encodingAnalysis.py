@@ -18,7 +18,7 @@ else:
     debug = False
 import lmvpautils as lmvpa
 import numpy as np
-plat = 'usb'
+# plat = 'usb'
 # debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
@@ -33,6 +33,7 @@ roi = 'grayMatter'
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
 beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
+# add everything as a sample attribute
 beta_events = lmvpa.loadevents(paths, subList, c=thisContrast)
 
 
