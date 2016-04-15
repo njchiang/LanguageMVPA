@@ -21,8 +21,10 @@ import numpy as np
 # plat = 'usb'
 # debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast = 'syntax'
+thisContrast = 'verb'
 roi = 'grayMatter'
+filterLen = 49
+filterOrd = 3
 # if debug:
 #     subList = {'LMVPA002': subList['LMVPA002']}
 
@@ -32,9 +34,9 @@ roi = 'grayMatter'
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
-beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
+# beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 # add everything as a sample attribute
-beta_events = lmvpa.loadevents(paths, subList, c=thisContrast)
+beta_events = lmvpa.loadevents(paths, subList)
 
 
 ######### for testing
@@ -106,7 +108,7 @@ for sub in subList.keys():
     thisDS=dsdict[sub]
     # savitsky golay filtering
 
-    sg.sg_filter(thisDS, 49, 3)
+    sg.sg_filter(thisDS, filterLen, filterOrd)
     # gallant group zscores before regression.
     # update events data
 
@@ -134,30 +136,38 @@ for sub in subList.keys():
     # normal regression. doesn't use desX from above.
 
     evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=('targets', 'chunks'),
+                                  condition_attr=(thisContrast, 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)
 
     # Ridge
-    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets'],
+    desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                 glmfit_kwargs=None, regr_attrs=None)
-
-
-    lidx=thisDS.chunks<thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
-    lds=copy.copy(desX)
-    lds.matrix=lds.matrix[lidx]
+    # language within
+    lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
+    lds = copy.copy(desX)
+    lds.matrix = lds.matrix[lidx]
     lres = runCVBootstrap(rds.copy()[lidx], lds)
     print 'language ' + str(np.mean(lres))
-    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + thisContrast + '_Lridge.nii.gz'))
+    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
+    del lds, lres  # just cleaning up
+    # pictures within
     pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
     pds = copy.copy(desX)
     pds.matrix = pds.matrix[pidx]
     pres = runCVBootstrap(rds.copy()[pidx], pds)
     print 'pictures: ' + str(np.mean(pres))
-    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + thisContrast + '_Pridge.nii.gz'))
+    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
+    del pds, pres
 
-    # now can make this happen for cross-modal stuff...
+    crossSet = rds.copy()
+    crossSet.chunks[lidx] = 1
+    crossSet.chunks[pidx] = 2
+    cres = runCVBootstrap(crossSet, desX)
+    print 'cross: ' + str(np.mean(cres))
+    map2nifti(thisDS, cres[0]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_P2Lridge.nii.gz'))
+    map2nifti(thisDS, cres[1]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_L2Pridge.nii.gz'))
 
 # maybe add this stuff later.
 # # some regressors might be corresponding not to original condition_attr

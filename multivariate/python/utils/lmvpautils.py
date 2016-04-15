@@ -129,6 +129,7 @@ def loadevents(p, s):
         fds[sub] = [bids.load_events(pjoin(p[0], 'data', sub, 'func', sub + '_' + r + '.tsv')) for r in s[sub]]
     return fds
 
+
 def loadsubdata(p, s, m=None, c='trial_type'):
     from mvpa2.base import dataset
     fds = {}
@@ -141,6 +142,7 @@ def loadsubdata(p, s, m=None, c='trial_type'):
 # a=0 indicates that the dataset attributes of the first run should be used
 # for the merged dataset
 
+
 def loadmotionparams(p, s):
     import numpy as np
     import os
@@ -151,6 +153,7 @@ def loadmotionparams(p, s):
                for r in s[sub]]
         res[sub] = np.vstack(mcs)
     return res
+
 
 def amendtimings(ds, b):
     from mvpa2.datasets import eventrelated as er
@@ -164,8 +167,11 @@ def amendtimings(ds, b):
         for ev in theseEvents[i]:
             ev['chunks'] = ds.sa['chunks'].unique[i]
             ev['onset'] += TR*idx
-            ev['targets'] = ev['condition']
-            ev['amplitude'] = ev['intensity']
+            # ev['targets'] = ev['condition']
+            if 'intensity' in ev:
+                ev['amplitude'] = ev['intensity']
+            else:
+                ev['amplitude'] = 1
             if ev['duration'] is not '0':
                 events.append(ev)
         idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
@@ -174,6 +180,8 @@ def amendtimings(ds, b):
     return ds, events
 #####################################
 # regression stuff
+
+
 def events2dict(events):
     evvars = {}
     for k in events[0]:
@@ -204,7 +212,7 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
                              "happen.  Choose another name if defined it"
                              % (ei, glm_condition_attr))
         compound_label = ei[glm_condition_attr] = \
-            'glm_label_' + '+'.join(
+            'glm_label_' + str(con) + '+'.join(
                 str(ei[con]) for con in condition_attr)
         # and mapping back to original values, without str()
         # for each condition:
@@ -261,9 +269,11 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
         else:
             design_kwargs['add_reg_names'] = names
 
-    return make_dmtx(ds.sa[time_attr].value,
-                     paradigm=paradigm,
-                     **design_kwargs)
+    X = make_dmtx(ds.sa[time_attr].value, paradigm=paradigm, **design_kwargs)
+    for i, reg in enumerate(X.names):
+        ds.sa[reg] = X.matrix[:, i]
+
+    return X, ds
 
 def corrsig(N, c=None, p=.95):
     # if c exists, this returns the cutoff
