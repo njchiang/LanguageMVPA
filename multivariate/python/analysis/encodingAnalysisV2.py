@@ -18,11 +18,11 @@ else:
     debug = False
 import lmvpautils as lmvpa
 import numpy as np
-# plat = 'usb'
+plat = 'usb'
 # debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast = 'syntax'
-roi = 'grayMatter'
+thisContrast = ['syntax', 'verb']
+roi = 'left_IFG_operc'
 # if debug:
 #     subList = {'LMVPA002': subList['LMVPA002']}
 
@@ -32,9 +32,8 @@ roi = 'grayMatter'
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
-beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 # add everything as a sample attribute
-beta_events = lmvpa.loadevents(paths, subList, c=thisContrast)
+beta_events = lmvpa.loadevents(paths, subList)
 
 
 ######### for testing
@@ -102,7 +101,7 @@ import SavGolFilter as sg
 import mvpa2.datasets.eventrelated as er
 for sub in subList.keys():
     thisSub={sub: subList[sub]}
-    dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+    dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c=thisContrast)
     thisDS=dsdict[sub]
     # savitsky golay filtering
 
@@ -139,7 +138,7 @@ for sub in subList.keys():
                                   return_model=True)
 
     # Ridge
-    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets'],
+    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['syntax'],
                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                 glmfit_kwargs=None, regr_attrs=None)
 

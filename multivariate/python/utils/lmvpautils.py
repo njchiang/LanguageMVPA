@@ -76,9 +76,10 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
     from mvpa2.datasets import eventrelated as er
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.datasets.sources import bids as bids
-    efn = pjoin(p[0], 'data', s, 'func', s + '_' + r + '.tsv')
-    fe = bids.load_events(efn)
-    e = adjustevents(fe, c)
+    if isinstance(c, basestring):
+        # must be a list/tuple/array for the logic below
+        c = [c]
+
     # bfn = pjoin(p[0], 'data', s, 'func', 'extra', s+'_'+r+'_mc.nii.gz')
     # motion corrected and coregistered
     bfn = pjoin(p[0], 'data', s, 'func', s + '_' + r + '.nii.gz')
@@ -88,7 +89,12 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
     else:
         d = fmri_dataset(bfn, chunks=int(r.split('n')[1]), mask=m)
     # This line-- should be different if we're doing GLM, etc.
-    return er.assign_conditionlabels(d, e, noinfolabel='rest')
+    efn = pjoin(p[0], 'data', s, 'func', s + '_' + r + '.tsv')
+    fe = bids.load_events(efn)
+    for ci in c:
+        e = adjustevents(fe, ci)
+        d = er.assign_conditionlabels(d, e, noinfolabel='rest', label_attr=ci)
+    return d
 
 
 def adjustevents(e, c='trial_type'):
@@ -112,13 +118,15 @@ def replacetargets(d, ckey, c='trial_type'):
     return d
 
 
-def loadevents(p, s, c='trial_type'):
+def loadevents(p, s):
+    # if isinstance(c, basestring):
+    #     # must be a list/tuple/array for the logic below
+    #     c = [c]
     fds = {}
     from mvpa2.datasets.sources import bids
     from os.path import join as pjoin
     for sub in s.keys():
-        fds[sub] = [adjustevents(bids.load_events(pjoin(p[0], 'data', sub, 'func', sub + '_' + r + '.tsv')), c)
-            for r in s[sub]]
+        fds[sub] = [bids.load_events(pjoin(p[0], 'data', sub, 'func', sub + '_' + r + '.tsv')) for r in s[sub]]
     return fds
 
 def loadsubdata(p, s, m=None, c='trial_type'):
