@@ -47,7 +47,6 @@ class BootstrapRidgeMapper(GLMMapper):
 
         self.glmfit_kwargs = glmfit_kwargs
 
-
     def _fit_model(self, ds, X, reg_names):
         # X: design matrix. of shape nTimepoints x nRegressors. easy!
         # need to fit per chunk
