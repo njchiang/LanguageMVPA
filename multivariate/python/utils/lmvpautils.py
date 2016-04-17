@@ -28,7 +28,7 @@ def initpaths(platform):
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
     s = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
          "LMVPA002": ["Run1", "Run2", "Run3", "Run4"],
-         "LMVPA003": ["Run1", "Run2", "Run3", "Run4"],
+         "LMVPA003": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
          "LMVPA005": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
          "LMVPA006": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
          "LMVPA007": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
@@ -112,7 +112,7 @@ def adjustevents(e, c='trial_type'):
 def replacetargets(d, ckey, c='trial_type'):
     import numpy as np
     if c in ckey:
-        d.targets = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.targets]
+        d.targets = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.sa['trial_type']]
     else:
         print "not a valid contrasts, did not do anything."
     return d

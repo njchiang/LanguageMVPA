@@ -16,37 +16,39 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 
 import lmvpautils as lmvpa
-
 # plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast='syntax'
+thisContrast = 'trial_type'
 roi = 'left_IFG_operc'
-# subList = {'LMVPA001': subList['LMVPA001']}
+filterLen = 49
+filterOrd = 3
+debug=True
+if debug:
+    subList = {'LMVPA003': subList['LMVPA003']}
 # load things in as trial type for easy regression, then swap out labels accordingly
-ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
+# do we actually want to load all data simultaneously? or one brain at a time...
+# ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
-beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
+# beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
+# add everything as a sample attribute
+beta_events = lmvpa.loadevents(paths, subList)
 
-######### for testing
-# sub = 'LMVPA001'
-# ds = ds_all[sub]
-# from mvpa2.datasets.miscfx import summary
-# print summary(ds)
-# lmvpa.testsg(ds, 79, 3, 10, c='chunks')
-###############
-
-    # later this will loop
+import copy
+import os
+from mvpa2.datasets.mri import map2nifti
+from mvpa2.mappers.zscore import zscore
+import SavGolFilter as sg
+import mvpa2.datasets.eventrelated as er
 for sub in subList.keys():
-
+    thisSub = {sub: subList[sub]}
+    dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+    thisDS = dsdict[sub]
     # savitsky golay filtering
-    thisDS = ds_all[sub].copy()
-    import SavGolFilter as sg
-    sg.sg_filter(thisDS, 49, 3)
+    sg.sg_filter(thisDS, filterLen, filterOrd)
     # gallant group zscores before regression.
-    # update events data
-    from mvpa2.mappers.zscore import zscore
+
     # zscore w.r.t. rest trials
     # zscore(thisDS, param_est=('targets', ['rest']), chunks_attr='chunks')
     # zscore entire set. if done chunk-wise, there is no double-dipping (since we leave a chunk out at a time).
@@ -56,41 +58,22 @@ for sub in subList.keys():
     # huth method: essentially use FIR
     # mumford method: deconvolution with canonical HRF
 
-
     # refit events and regress...
     # get timing data from timing files
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
-
-    desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
+    # rds.sa['targets'] = rds.sa[thisContrast].values
+    desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['trial_type'],
                                 design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                 glmfit_kwargs=None, regr_attrs=None)
-
-    import mvpa2.datasets.eventrelated as er
-
+    #OLS beta extraction
     evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=('targets', 'chunks'),
+                                  condition_attr=('trial_type',  'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)
 
-    # # # regress, getting timing data from dataset
-    # events2 = er.find_events(targets=thisDS.sa.targets, chunks=thisDS.sa.chunks)
-    # # # events = [ev for ev in events if ev['targets'] not in ['rest']]
-    # #
-    # # # convert onsets and durations into timestamps
-    # for ev in events2:
-    #     ev['onset'] *= TR
-    #     ev['duration'] *= TR
-    #
-    # events2 = [ev for ev in events2 if ev['targets'] != 'rest']
-    # evds2 = er.fit_event_hrf_model(thisDS, events2, time_attr='time_coords',
-    #                               condition_attr=('targets', 'chunks'),
-    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-    #                               return_model=True)
-    # or, use nipy to generate design matrix and feed into ridge regression
-
     fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
 
-    fds = fds[fds.sa.targets != '0']
+    fds = fds[fds.targets != '0']
 
     # split data into language and pictures
     from mvpa2.base import dataset

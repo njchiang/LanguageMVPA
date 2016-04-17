@@ -19,15 +19,14 @@ else:
 import lmvpautils as lmvpa
 import numpy as np
 # plat = 'usb'
-# debug = True
+debug = False
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast = 'verb'
+thisContrast = 'syntax'
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-# if debug:
-#     subList = {'LMVPA002': subList['LMVPA002']}
-
+if debug:
+    subList = {'LMVPA003': subList['LMVPA003']}
 # load things in as trial type for easy regression, then swap out labels accordingly
 # do we actually want to load all data simultaneously? or one brain at a time...
 # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
@@ -50,15 +49,15 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
     # runs cross validation on the chunks of the dataset (leave-one-out)
     import BootstrapRidgeMapper as bsr
     import numpy as np
-    if alphas == None:
+    if alphas is None:
         alphas = np.logspace(0, 3, 20)
     # push design into source dataset
     # mds=[]
-    res=[]
+    res = []
     from mvpa2.datasets import Dataset
     for c in np.arange(len(ds.sa[part].unique)):
         # need to combine regressors into one...
-        trainidx =ds.sa[part].value != ds.sa[part].unique[c]
+        trainidx = ds.sa[part].value != ds.sa[part].unique[c]
         testidx = ds.sa[part].value == ds.sa[part].unique[c]
         glm_regs = [(reg, X.matrix[trainidx, i]) for i, reg in enumerate(X.names)]
         # MUST CONTAIN  chunklen and nchunks
@@ -87,12 +86,7 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
         Rsqs = 1 - (resvar / ds.samples[testidx].var(0))
         corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
         res.append(corrs)
-
-
-    from mvpa2.base import dataset
     return Dataset(np.vstack(res), sa={part: ds.sa[part].unique})
-
-
     # later this will loop
 
 
@@ -103,14 +97,12 @@ from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import mvpa2.datasets.eventrelated as er
 for sub in subList.keys():
-    thisSub={sub: subList[sub]}
+    thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
-    thisDS=dsdict[sub]
+    thisDS = dsdict[sub]
     # savitsky golay filtering
-
     sg.sg_filter(thisDS, filterLen, filterOrd)
     # gallant group zscores before regression.
-    # update events data
 
     # zscore w.r.t. rest trials
     # zscore(thisDS, param_est=('targets', ['rest']), chunks_attr='chunks')
@@ -129,12 +121,8 @@ for sub in subList.keys():
     # desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
     #                             design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
     #                             glmfit_kwargs=None, regr_attrs=None)
-
-
-
     # GLM
     # normal regression. doesn't use desX from above.
-
     evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
                                   condition_attr=(thisContrast, 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
@@ -142,8 +130,8 @@ for sub in subList.keys():
 
     # Ridge
     desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
-                                design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
-                                glmfit_kwargs=None, regr_attrs=None)
+                                     design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
+                                     glmfit_kwargs=None, regr_attrs=None)
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
     lds = copy.copy(desX)
