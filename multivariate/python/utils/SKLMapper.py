@@ -30,8 +30,7 @@ class SKLRegressionMapper(GLMMapper):
     ``fit()`` method.
     """
 
-
-    def __init__(self, regs, glmfit_kwargs=None, **kwargs):
+    def __init__(self, regs, clf=None, glmfit_kwargs=None, **kwargs):
         """
         Parameters
         ----------
@@ -46,11 +45,18 @@ class SKLRegressionMapper(GLMMapper):
         if glmfit_kwargs is None:
             glmfit_kwargs = {}
         self.glmfit_kwargs = glmfit_kwargs
+        self.clf = clf
 
 
     def _fit_model(self, ds, X, reg_names):
-        glm = GeneralLinearModel(X)
-        glm.fit(ds.samples, **self.glmfit_kwargs)
-        out = Dataset(glm.get_beta(),
-                      sa={self.get_space(): reg_names})
+        if self.__clf is None:
+            glm = GeneralLinearModel(X)
+            glm.fit(ds.samples, **self.glmfit_kwargs)
+            out = Dataset(glm.get_beta(),
+                          sa={self.get_space(): reg_names})
+        else:
+            # a model of sklearn linear model
+            glm = self.__clf
+            glm.fit(X, ds.samples)
+            out = Dataset(glm.coef_, sa={self.get_space(): reg_names})
         return glm, out
