@@ -18,7 +18,7 @@ else:
 import lmvpautils as lmvpa
 # plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast = 'trial_type'
+thisContrast = 'syntax'
 roi = 'left_IFG_operc'
 filterLen = 49
 filterOrd = 3
@@ -86,6 +86,10 @@ for sub in subList.keys():
     pfds = dataset.vstack(pfds)
 
 
+    from sklearn import linear_model as lm
+    from mvpa2.clfs.skl.base import SKLLearnerAdapter
+    clf = SKLLearnerAdapter(lm.BayesianRidge())
+
     from mvpa2.clfs import svm
     clf = svm.LinearCSVMC()
     from mvpa2.measures.base import CrossValidation
@@ -101,3 +105,7 @@ for sub in subList.keys():
     pres = cv(pfds)
     print "pictures: " + str(np.mean(pres.samples))
 
+# clf = lm.BayesianRidge()
+# clf.fit(desX.matrix, thisDS.samples[:,1])
+# clf.predict(desX.matrix)
+# make class that takes skl regression models as input and wraps into mapper

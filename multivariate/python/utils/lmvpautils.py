@@ -112,7 +112,7 @@ def adjustevents(e, c='trial_type'):
 def replacetargets(d, ckey, c='trial_type'):
     import numpy as np
     if c in ckey:
-        d.targets = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.sa['trial_type']]
+        d.targets = np.array([ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.sa['trial_type']])
     else:
         print "not a valid contrasts, did not do anything."
     return d
