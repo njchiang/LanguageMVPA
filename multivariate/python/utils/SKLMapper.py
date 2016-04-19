@@ -21,7 +21,7 @@ from mvpa2.datasets import Dataset
 from mvpa2.mappers.glm import GLMMapper
 
 
-class SKLRegressionMapper(GLMMapper):
+class SKLRegressionMapper(Mapper):
     """NiPy-based GLMMapper implementation
 
     This is basically a front-end for
@@ -30,7 +30,7 @@ class SKLRegressionMapper(GLMMapper):
     ``fit()`` method.
     """
 
-    def __init__(self, regs, clf=None, glmfit_kwargs=None, **kwargs):
+    def __init__(self, regs, clf=None, **kwargs):
         """
         Parameters
         ----------
@@ -60,3 +60,75 @@ class SKLRegressionMapper(GLMMapper):
             glm.fit(X, ds.samples)
             out = Dataset(glm.coef_, sa={self.get_space(): reg_names})
         return glm, out
+
+
+
+
+
+    def _untrain(self):
+        self._transformer = None
+
+
+    def _get_y(self, ds):
+        space = self.get_space()
+        if space:
+            y = ds.sa[space].value
+        else:
+            y = None
+        return y
+
+
+    def _get_transformer(self):
+        if self._transformer is None:
+            self._transformer = deepcopy(self._pristine_transformer)
+        return self._transformer
+
+
+    def _train(self, ds):
+        tf = self._get_transformer()
+        return tf.fit(ds.samples, self._get_y(ds))
+
+
+    # def _forward_dataset(self, ds):
+    #     tf = self._get_transformer()
+    #     if not self.is_trained:
+    #         # sklearn support fit and transform at the same time, which might
+    #         # be a lot faster, but we only do that, if the mapper is not
+    #         # trained already
+    #         out = tf.fit_transform(ds.samples, self._get_y(ds))
+    #         self._set_trained()
+    #     else:
+    #         # some SKL classes do not swallow a superfluous `y` argument
+    #         # we could be clever and use 'inspect' to query the function
+    #         # signature, but we'll use a sledge hammer instead
+    #         try:
+    #             out = tf.transform(ds.samples, self._get_y(ds))
+    #         except TypeError:
+    #             out = tf.transform(ds.samples)
+    #     return out
+
+
+    def _forward_data(self, data):
+        """Forward-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
+
+
+    def _reverse_data(self, data):
+        """Reverse-map some data.
+
+        This is a private method that has to be implemented in derived
+        classes.
+
+        Parameters
+        ----------
+        data : anything (supported the derived class)
+        """
+        raise NotImplementedError
