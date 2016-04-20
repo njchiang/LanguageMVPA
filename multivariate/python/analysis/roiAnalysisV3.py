@@ -16,7 +16,7 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 
 import lmvpautils as lmvpa
-# plat = 'usb'
+plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
 roi = 'left_IFG_operc'
@@ -24,7 +24,7 @@ filterLen = 49
 filterOrd = 3
 debug=True
 if debug:
-    subList = {'LMVPA003': subList['LMVPA003']}
+    subList = {'LMVPA005': subList['LMVPA005']}
 # load things in as trial type for easy regression, then swap out labels accordingly
 # do we actually want to load all data simultaneously? or one brain at a time...
 # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')

@@ -11,14 +11,10 @@
 __docformat__ = 'restructuredtext'
 
 from mvpa2.base import externals
-
-if externals.exists('nipy', raise_=True):
-    from nipy.modalities.fmri.glm import GeneralLinearModel
-
 import numpy as np
-
+from mvpa2.support.copy import deepcopy
 from mvpa2.datasets import Dataset
-from mvpa2.mappers.glm import GLMMapper
+from mvpa2.mappers.base import Mapper
 
 
 class SKLRegressionMapper(Mapper):
@@ -30,7 +26,7 @@ class SKLRegressionMapper(Mapper):
     ``fit()`` method.
     """
 
-    def __init__(self, regs, clf=None, **kwargs):
+    def __init__(self, regs=[], add_regs=None, clf=None, **kwargs):
         """
         Parameters
         ----------
@@ -41,33 +37,53 @@ class SKLRegressionMapper(Mapper):
           Keyword arguments to be passed to GeneralLinearModel.fit().
           By default an AR1 model is used.
         """
-        GLMMapper.__init__(self, regs, **kwargs)
-        if glmfit_kwargs is None:
-            glmfit_kwargs = {}
-        self.glmfit_kwargs = glmfit_kwargs
-        self.clf = clf
+        Mapper.__init__(self, auto_train=True, **kwargs)
+        # GLMMapper.__init__(self, regs, **kwargs)
+        self._clf = None
+        self._pristine_clf = clf
+        self.regs = list(regs)
+        if add_regs is None:
+            add_regs = tuple()
+        self.add_regs = tuple(add_regs)
 
+    def _build_design(self, ds):
+        X = None
+        regsfromds = list(self.regs)
+        reg_names=None
+        if len(regsfromds):
+            X = np.vstack([ds.sa[reg].value for reg in regsfromds]).T
+            reg_names=regsfromds
+        if len(self.add_regs):
+            regs=[]
+            if reg_names is None:
+                reg_names = []
+            for reg in self.add_regs:
+                regs.append(reg[1])
+                reg_names.append(reg[0])
+            if X is None:
+                X = np.vstack(regs).T
+            else:
+                X = np.vstack([X.T] + regs).T
+        if self.params.add_constant:
+            constant = np.ones(len(ds))
+            if X is None:
+                X = constant[None].T
+            else:
+                X = np.vstack((X.T, constant)).T
+            if reg_names is None:
+                reg_names = ['constant']
+            else:
+                reg_names.append('constant')
+        if X is None:
+            raise ValueError("no design specified")
+        return reg_names, X
 
     def _fit_model(self, ds, X, reg_names):
-        if self.__clf is None:
-            glm = GeneralLinearModel(X)
-            glm.fit(ds.samples, **self.glmfit_kwargs)
-            out = Dataset(glm.get_beta(),
-                          sa={self.get_space(): reg_names})
-        else:
-            # a model of sklearn linear model
-            glm = self.__clf
-            glm.fit(X, ds.samples)
-            out = Dataset(glm.coef_, sa={self.get_space(): reg_names})
+        # a model of sklearn linear model
+        glm = self.__clf
+        glm.fit(X, ds.samples)
+        out = Dataset(glm.coef_, sa={self.get_space(): reg_names})
         return glm, out
-
-
-
-
-
-    def _untrain(self):
-        self._transformer = None
-
 
     def _get_y(self, ds):
         space = self.get_space()
@@ -77,16 +93,15 @@ class SKLRegressionMapper(Mapper):
             y = None
         return y
 
+    def _get_clf(self):
+        if self._clf is None:
+            self._clf = deepcopy(self._clf)
+        return self._clf
 
-    def _get_transformer(self):
-        if self._transformer is None:
-            self._transformer = deepcopy(self._pristine_transformer)
-        return self._transformer
-
-
-    def _train(self, ds):
-        tf = self._get_transformer()
-        return tf.fit(ds.samples, self._get_y(ds))
+    # def _train(self, ds):
+    #     tf = self._get_clf()
+    #     reg_names, X = self._build_design(self, ds)
+    #     return tf.fit(X, ds.samples)
 
 
     # def _forward_dataset(self, ds):
@@ -107,9 +122,10 @@ class SKLRegressionMapper(Mapper):
     #             out = tf.transform(ds.samples)
     #     return out
 
+    # I don't want multivariate regression... do I? I want iterated regression... okay so it works. output is feature x beta
 
     def _forward_data(self, data):
-        """Forward-map some data.
+        """Forward-map some data instead of implementing forward_dataset (which will call this on a copy).
 
         This is a private method that has to be implemented in derived
         classes.
@@ -118,7 +134,19 @@ class SKLRegressionMapper(Mapper):
         ----------
         data : anything (supported the derived class)
         """
-        raise NotImplementedError
+        reg_names, X = self._build_design(self, data)
+        model, out = self._fit_model(data, X, reg_names)
+        out.fa.update(data.fa)
+        out.a.update(data.a) # this last one might be a bit to opportunistic
+        # determine the output
+        if self.params.return_design:
+            if not len(out) == len(X.T):
+                raise ValueError("cannot include GLM regressors as sample "
+                                 "attributes (dataset probably contains "
+                                 "something other than parameter estimates")
+            out.sa['regressors'] = X.T
+        if self.params.return_model:
+            out.a['model'] = model
 
 
     def _reverse_data(self, data):
