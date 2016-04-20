@@ -15,6 +15,7 @@ import numpy as np
 from mvpa2.support.copy import deepcopy
 from mvpa2.datasets import Dataset
 from mvpa2.mappers.base import Mapper
+from mvpa2.base.param import Parameter
 
 
 class SKLRegressionMapper(Mapper):
@@ -25,6 +26,18 @@ class SKLRegressionMapper(Mapper):
     In particular, it supports all keyword arguments of its
     ``fit()`` method.
     """
+    add_constant = Parameter(False, constraints='bool', doc="""\
+            If True, a constant will be added as last column in the
+            design matrix.""")
+
+    return_design = Parameter(False, constraints='bool', doc="""\
+            If True, the mapped dataset will contain a sample attribute
+            ``regressors`` with the design matrix columns.""")
+
+    return_model = Parameter(False, constraints='bool', doc="""\
+            If True, the mapped dataset will contain am attribute
+            ``model`` for an instance of the fitted GLM. The type of
+            this instance dependent on the actual implementation used.""")
 
     def __init__(self, regs=[], add_regs=None, clf=None, **kwargs):
         """
@@ -80,9 +93,9 @@ class SKLRegressionMapper(Mapper):
 
     def _fit_model(self, ds, X, reg_names):
         # a model of sklearn linear model
-        glm = self.__clf
+        glm = self._get_clf()
         glm.fit(X, ds.samples)
-        out = Dataset(glm.coef_, sa={self.get_space(): reg_names})
+        out = Dataset(glm.coef_.T, sa={self.get_space(): reg_names})
         return glm, out
 
     def _get_y(self, ds):
@@ -95,7 +108,7 @@ class SKLRegressionMapper(Mapper):
 
     def _get_clf(self):
         if self._clf is None:
-            self._clf = deepcopy(self._clf)
+            self._clf = deepcopy(self._pristine_clf)
         return self._clf
 
     # def _train(self, ds):
@@ -124,7 +137,7 @@ class SKLRegressionMapper(Mapper):
 
     # I don't want multivariate regression... do I? I want iterated regression... okay so it works. output is feature x beta
 
-    def _forward_data(self, data):
+    def _forward_dataset(self, data):
         """Forward-map some data instead of implementing forward_dataset (which will call this on a copy).
 
         This is a private method that has to be implemented in derived
@@ -134,7 +147,7 @@ class SKLRegressionMapper(Mapper):
         ----------
         data : anything (supported the derived class)
         """
-        reg_names, X = self._build_design(self, data)
+        reg_names, X = self._build_design(data)
         model, out = self._fit_model(data, X, reg_names)
         out.fa.update(data.fa)
         out.a.update(data.a) # this last one might be a bit to opportunistic

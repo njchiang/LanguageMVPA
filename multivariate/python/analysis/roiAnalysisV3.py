@@ -16,7 +16,7 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 
 import lmvpautils as lmvpa
-plat = 'usb'
+# plat = 'usb'
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
 roi = 'left_IFG_operc'
@@ -41,6 +41,8 @@ from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import mvpa2.datasets.eventrelated as er
+import sklearn.linear_model as lm
+import SKLMapper as sklm
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
