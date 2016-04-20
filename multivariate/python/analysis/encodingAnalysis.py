@@ -37,18 +37,20 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 # add everything as a sample attribute
 beta_events = lmvpa.loadevents(paths, subList)
 
+import sklearn.linear_model as lm
+import SKLMapper as sklm
+import BootstrapRidgeMapper as bsr
+import numpy as np
+import copy
+import os
+from mvpa2.datasets.mri import map2nifti
+from mvpa2.mappers.zscore import zscore
+import SavGolFilter as sg
+import mvpa2.datasets.eventrelated as er
 
-######### for testing
-# sub = 'LMVPA002'
-# ds = ds_all[sub]
-# from mvpa2.datasets.miscfx import summary
-# print summary(ds)
-# lmvpa.testsg(ds, 79, 3, 10, c='chunks')
-###############
+# i really need to just train on chunks though...
 def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
     # runs cross validation on the chunks of the dataset (leave-one-out)
-    import BootstrapRidgeMapper as bsr
-    import numpy as np
     if alphas is None:
         alphas = np.logspace(0, 3, 20)
     # push design into source dataset
@@ -90,12 +92,7 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
     # later this will loop
 
 
-import copy
-import os
-from mvpa2.datasets.mri import map2nifti
-from mvpa2.mappers.zscore import zscore
-import SavGolFilter as sg
-import mvpa2.datasets.eventrelated as er
+
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')

@@ -10,7 +10,6 @@
 
 __docformat__ = 'restructuredtext'
 
-from mvpa2.base import externals
 import numpy as np
 from mvpa2.support.copy import deepcopy
 from mvpa2.datasets import Dataset
@@ -19,12 +18,8 @@ from mvpa2.base.param import Parameter
 
 
 class SKLRegressionMapper(Mapper):
-    """NiPy-based GLMMapper implementation
-
-    This is basically a front-end for
-    :class:`~ nipy.modalities.fmri.glm.GeneralLinearModel`.
-    In particular, it supports all keyword arguments of its
-    ``fit()`` method.
+    """Mapper for Scikit-learn regression algorithms from sklearn.linear_model
+    Essentially runs a regression by building the design matrix and running the algorithm.
     """
     add_constant = Parameter(False, constraints='bool', doc="""\
             If True, a constant will be added as last column in the
@@ -111,32 +106,6 @@ class SKLRegressionMapper(Mapper):
             self._clf = deepcopy(self._pristine_clf)
         return self._clf
 
-    # def _train(self, ds):
-    #     tf = self._get_clf()
-    #     reg_names, X = self._build_design(self, ds)
-    #     return tf.fit(X, ds.samples)
-
-
-    # def _forward_dataset(self, ds):
-    #     tf = self._get_transformer()
-    #     if not self.is_trained:
-    #         # sklearn support fit and transform at the same time, which might
-    #         # be a lot faster, but we only do that, if the mapper is not
-    #         # trained already
-    #         out = tf.fit_transform(ds.samples, self._get_y(ds))
-    #         self._set_trained()
-    #     else:
-    #         # some SKL classes do not swallow a superfluous `y` argument
-    #         # we could be clever and use 'inspect' to query the function
-    #         # signature, but we'll use a sledge hammer instead
-    #         try:
-    #             out = tf.transform(ds.samples, self._get_y(ds))
-    #         except TypeError:
-    #             out = tf.transform(ds.samples)
-    #     return out
-
-    # I don't want multivariate regression... do I? I want iterated regression... okay so it works. output is feature x beta
-
     def _forward_dataset(self, data):
         """Forward-map some data instead of implementing forward_dataset (which will call this on a copy).
 
@@ -160,7 +129,6 @@ class SKLRegressionMapper(Mapper):
             out.sa['regressors'] = X.T
         if self.params.return_model:
             out.a['model'] = model
-
 
     def _reverse_data(self, data):
         """Reverse-map some data.
