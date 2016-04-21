@@ -118,6 +118,8 @@ class SKLRegressionMapper(Mapper):
         """
         reg_names, X = self._build_design(data)
         model, out = self._fit_model(data, X, reg_names)
+        out.sa['regressor_names'] = [r.split('+')[0] for r in reg_names]
+        out.sa['chunks'] = np.array([r.split('+')[-1] for r in reg_names], dtype=np.int)
         out.fa.update(data.fa)
         out.a.update(data.a) # this last one might be a bit to opportunistic
         # determine the output

@@ -17,10 +17,10 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-# plat = 'usb'
+plat = 'usb'
 debug = True
 thisContrast = 'syntax'
-roi = 'grayMatter'
+roi = 'left_IFG_operc'
 filterLen = 49
 filterOrd = 3
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
@@ -48,47 +48,32 @@ import SavGolFilter as sg
 import mvpa2.datasets.eventrelated as er
 
 # i really need to just train on chunks though...
-def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
-    # runs cross validation on the chunks of the dataset (leave-one-out)
-    if alphas is None:
-        alphas = np.logspace(0, 3, 20)
-    # push design into source dataset
-    # mds=[]
+def encodingcorr(betas, ds, part_attr='chunks'):
+    # iterate through the attributes of the dataset
+    des = np.array(betas.sa['regressors']).T
+    # need to only pull the correct betas...
     res = []
-    from mvpa2.datasets import Dataset
-    for c in np.arange(len(ds.sa[part].unique)):
-        # need to combine regressors into one...
-        trainidx = ds.sa[part].value != ds.sa[part].unique[c]
-        testidx = ds.sa[part].value == ds.sa[part].unique[c]
-        glm_regs = [(reg, X.matrix[trainidx, i]) for i, reg in enumerate(X.names)]
-        # MUST CONTAIN  chunklen and nchunks
-        glmfit_kwargs = {'chunklen': np.sum(trainidx) / 5 / nchunks,
-                         'nchunks': nchunks,
-                         'alphas': alphas,
-                         'nboots': nboots,
-                         'corrmin': 0.2,
-                         'joined': None,
-                         'singcutoff': 1e-10,
-                         'normalpha': False,
-                         'single_alpha': True,
-                         'use_corr': True}
-        # first parameter is null because we have made our own design matrix (add_regs)
-        # now this is working. need to add functionality to append chunks
-        bootstrapridge = bsr.BootstrapRidgeMapper([], glmfit_kwargs=glmfit_kwargs,
-                                                  add_regs=glm_regs,
-                                                  return_model=True)
+    for i in ds.sa[part_attr].unique:
+        trainidx = ds.sa['chunks'].unique[ds.sa['chunks'].unique != i]
+        thesebetas = []
+        for j in trainidx:
+            thesebetas.append(betas.samples[betas.chunks==j])
+        estbetas = np.mean(np.dstack(thesebetas), axis=2)
+        pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
+                                               estbetas)
 
-        model_params = bootstrapridge(ds[trainidx])
-        pred = np.dot(X.matrix[testidx], model_params.samples)
+
         # model_params.sa[part] = np.repeat(ds.sa[part].unique[c],
         #                                   len(model_params), axis=0)
         # mds.append(model_params)
-        resvar = (ds.samples[testidx] - pred).var(0)
-        Rsqs = 1 - (resvar / ds.samples[testidx].var(0))
+        resvar = (ds.samples[ds.chunks == i] - pred).var(0)
+        Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
         corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
         res.append(corrs)
-    return Dataset(np.vstack(res), sa={part: ds.sa[part].unique})
-    # later this will loop
+    from mvpa2.datasets import Dataset
+    return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
+
+
 
 
 
@@ -140,26 +125,22 @@ for sub in subList.keys():
             regressor_names.append(rn)
     regressor_names.sort()
 
+    # chunks refers to the sa. seems to be a copying method.
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
-    lds = copy.copy(desX)
-    # lds.matrix = lds.matrix[lidx]
-    # lres = runCVBootstrap(rds.copy()[lidx], lds)
-    #  this... doesn't quite work yet.
-    lclf = sklm.SKLRegressionMapper(regressor_names, [], lm.Ridge())
+    lclf = sklm.SKLRegressionMapper(regressor_names, [], lm.Ridge(), return_design=True)
+    betas = lclf(rds) # not sure if i need to regress out chunkwise mean too
 
-
+    lres = encodingcorr(betas, thisDS[thisDS.chunks <= 3], part_attr='chunks')
+    # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
     print 'language ' + str(np.mean(lres))
     map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
-    del lds, lres  # just cleaning up
+    del lres  # just cleaning up
     # pictures within
-    pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
-    pds = copy.copy(desX)
-    pds.matrix = pds.matrix[pidx]
-    pres = runCVBootstrap(rds.copy()[pidx], pds)
+    pres = encodingcorr(betas, thisDS[thisDS.chunks >3], part_attr='chunks')
     print 'pictures: ' + str(np.mean(pres))
     map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
-    del pds, pres
+    del pres
 
     crossSet = rds.copy()
     crossSet.chunks[lidx] = 1
