@@ -17,7 +17,7 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-plat = 'usb'
+# plat = 'usb'
 debug = True
 thisContrast = 'syntax'
 roi = 'grayMatter'
@@ -128,7 +128,7 @@ for sub in subList.keys():
     # Ridge
     if isinstance(thisContrast, basestring):
         thisContrast=[thisContrast]
-
+    # do i want to do this crossed with chunks for everything?...
     desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                      regr_attrs=None)
@@ -138,7 +138,7 @@ for sub in subList.keys():
     for rn in rds.sa.keys():
         if searchstring in rn:
             regressor_names.append(rn)
-
+    regressor_names.sort()
 
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]

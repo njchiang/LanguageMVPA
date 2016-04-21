@@ -130,6 +130,8 @@ class SKLRegressionMapper(Mapper):
         if self.params.return_model:
             out.a['model'] = model
 
+        return out
+
     def _reverse_data(self, data):
         """Reverse-map some data.
 
