@@ -192,56 +192,37 @@ def events2dict(events):
                              "events (could not find '%s')" % k)
     return evvars
 
-
-def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
+# new make_designmat from scratch
+def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, regr_attrs=None):
+    # make glm regressors for all attributes. so loop through condition_attr and add them all...
     import copy
     from nipy.modalities.fmri.design_matrix import make_dmtx
     import numpy as np
     # Decide/device condition attribute on which GLM will actually be done
+
     if isinstance(condition_attr, basestring):
         # must be a list/tuple/array for the logic below
         condition_attr = [condition_attr]
 
-    glm_condition_attr = 'regressor_names'  # actual regressors
-    glm_condition_attr_map = dict([(con, dict()) for con in condition_attr])  #
-    # to map back to original conditions
     e = copy.deepcopy(e)  # since we are modifying in place
-    for ei in e:
-        if glm_condition_attr in ei:
-            raise ValueError("Event %s already has %s defined.  Should not "
-                             "happen.  Choose another name if defined it"
-                             % (ei, glm_condition_attr))
-        compound_label = ei[glm_condition_attr] = \
-            'glm_label_' + str(con) + '+'.join(
-                str(ei[con]) for con in condition_attr)
-        # and mapping back to original values, without str()
-        # for each condition:
-        for con in condition_attr:
-            glm_condition_attr_map[con][compound_label] = ei[con]
+    glm_condition_attrs=[]
+    for i, con in enumerate(condition_attr):
+        glm_condition_attr = 'regressors_' + str(con)
+        glm_condition_attrs.append(glm_condition_attr)
+        for ei in e:
+            if glm_condition_attr in ei:
+                raise ValueError("Event %s already has %s defined.  Should not "
+                                 "happen.  Choose another name if defined it"
+                                 % (ei, glm_condition_attr))
+            ei[glm_condition_attr] = \
+                'glm_label_' + str(con) + '+'.join(str(ei[con]))
 
     evvars = events2dict(e)
     add_paradigm_kwargs = {}
     if 'amplitude' in evvars:
         add_paradigm_kwargs['amplitude'] = evvars['amplitude']
-    # create paradigm
-    if 'duration' in evvars:
-        from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
-        # NiPy considers everything with a duration as a block paradigm
-        paradigm = BlockParadigm(
-            con_id=evvars[glm_condition_attr],
-            onset=evvars['onset'],
-            duration=evvars['duration'])
-    else:
-        from nipy.modalities.fmri.experimental_paradigm \
-            import EventRelatedParadigm
-        paradigm = EventRelatedParadigm(
-            con_id=evvars[glm_condition_attr],
-            onset=evvars['onset'])
-    # create design matrix -- all kinds of fancy additional regr can be
-    # auto-generated
     if design_kwargs is None:
         design_kwargs = {}
-
     if not regr_attrs is None:
         names = []
         regrs = []
@@ -269,11 +250,124 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
         else:
             design_kwargs['add_reg_names'] = names
 
-    X = make_dmtx(ds.sa[time_attr].value, paradigm=paradigm, **design_kwargs)
-    for i, reg in enumerate(X.names):
-        ds.sa[reg] = X.matrix[:, i]
+    X = {}
+    for ci, con in enumerate(condition_attr):
+        # create paradigm
+        if 'duration' in evvars:
+            from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
+            # NiPy considers everything with a duration as a block paradigm
+            paradigm = BlockParadigm(
+                con_id=evvars[glm_condition_attrs[ci]],
+                onset=evvars['onset'],
+                duration=evvars['duration'],
+                **add_paradigm_kwargs)
+        else:
+            from nipy.modalities.fmri.experimental_paradigm \
+                import EventRelatedParadigm
+            paradigm = EventRelatedParadigm(
+                con_id=evvars[glm_condition_attrs[ci]],
+                onset=evvars['onset'],
+                **add_paradigm_kwargs)
+        X[con] = make_dmtx(ds.sa[time_attr].value, paradigm=paradigm, **design_kwargs)
+        for i, reg in enumerate(X[con].names):
+            ds.sa[reg] = X[con].matrix[:, i]
+        if con in ds.sa.keys():
+            ds.sa.pop(con)
+        ds.sa['glm_label_probe'] = ds.sa.pop('glm_label_' + str(con) + '0')
 
+    # concatenate X... add chunk regressors...
+    if 'chunks' in ds.sa.keys():
+        for i in ds.sa['chunks'].unique:
+            ds.sa['glm_label_chunks' + str(i)] = np.array(ds.sa['chunks'].value == i, dtype=np.int)
     return X, ds
+
+# def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
+#     # for now... loop through this and feed in one event at a time.
+#     import copy
+#     from nipy.modalities.fmri.design_matrix import make_dmtx
+#     import numpy as np
+#     # Decide/device condition attribute on which GLM will actually be done
+#     glm_condition_attr = 'regressor_names'
+#     if isinstance(condition_attr, basestring):
+#         # must be a list/tuple/array for the logic below
+#         condition_attr = [condition_attr]
+#
+#
+#     glm_condition_attr_map = dict([(con, dict()) for con in condition_attr])  #
+#     # to map back to original conditions
+#     e = copy.deepcopy(e)  # since we are modifying in place
+#     for ei in e:
+#         if glm_condition_attr in ei:
+#             raise ValueError("Event %s already has %s defined.  Should not "
+#                              "happen.  Choose another name if defined it"
+#                              % (ei, glm_condition_attr))
+#         compound_label = ei[glm_condition_attr] = \
+#             'glm_label_' + str(con) + '+'.join(
+#                 str(ei[con]) for con in condition_attr)
+#         # and mapping back to original values, without str()
+#         # for each condition:
+#         for con in condition_attr:
+#             glm_condition_attr_map[con][compound_label] = ei[con]
+#
+#     evvars = events2dict(e)
+#     add_paradigm_kwargs = {}
+#     if 'amplitude' in evvars:
+#         add_paradigm_kwargs['amplitude'] = evvars['amplitude']
+#     # create paradigm
+#     if 'duration' in evvars:
+#         from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
+#         # NiPy considers everything with a duration as a block paradigm
+#         paradigm = BlockParadigm(
+#             con_id=evvars[glm_condition_attr],
+#             onset=evvars['onset'],
+#             duration=evvars['duration'],
+#             **add_paradigm_kwargs)
+#     else:
+#         from nipy.modalities.fmri.experimental_paradigm \
+#             import EventRelatedParadigm
+#         paradigm = EventRelatedParadigm(
+#             con_id=evvars[glm_condition_attr],
+#             onset=evvars['onset'],
+#             **add_paradigm_kwargs)
+#     # create design matrix -- all kinds of fancy additional regr can be
+#     # auto-generated
+#     if design_kwargs is None:
+#         design_kwargs = {}
+#
+#     if not regr_attrs is None:
+#         names = []
+#         regrs = []
+#         for attr in regr_attrs:
+#             regr = ds.sa[attr].value
+#             # add rudimentary dimension for easy hstacking later on
+#             if regr.ndim < 2:
+#                 regr = regr[:, np.newaxis]
+#             if regr.shape[1] == 1:
+#                 names.append(attr)
+#             else:
+#                 #  add one per each column of the regressor
+#                 for i in xrange(regr.shape[1]):
+#                     names.append("%s.%d" % (attr, i))
+#             regrs.append(regr)
+#         regrs = np.hstack(regrs)
+#
+#         if 'add_regs' in design_kwargs:
+#             design_kwargs['add_regs'] = np.hstack((design_kwargs['add_regs'],
+#                                                    regrs))
+#         else:
+#             design_kwargs['add_regs'] = regrs
+#         if 'add_reg_names' in design_kwargs:
+#             design_kwargs['add_reg_names'].extend(names)
+#         else:
+#             design_kwargs['add_reg_names'] = names
+#
+#     X = make_dmtx(ds.sa[time_attr].value, paradigm=paradigm, **design_kwargs)
+#     for i, reg in enumerate(X.names):
+#         ds.sa[reg] = X.matrix[:, i]
+#
+#     for con in condition_attr:
+#         ds.sa.pop(con)
+#     return X, ds
 
 def corrsig(N, c=None, p=.95):
     # if c exists, this returns the cutoff
