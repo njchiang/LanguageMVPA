@@ -17,10 +17,10 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-plat = 'usb'
-debug = True
-thisContrast = 'syntax'
-roi = 'left_IFG_operc'
+# plat = 'usb'
+# debug = True
+thisContrast = ['syntax', 'verb']
+roi = 'langNet'
 filterLen = 49
 filterOrd = 3
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
@@ -40,17 +40,22 @@ import sklearn.linear_model as lm
 import SKLMapper as sklm
 import BootstrapRidgeMapper as bsr
 import numpy as np
-import copy
 import os
 from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
-import mvpa2.datasets.eventrelated as er
+
 
 # i really need to just train on chunks though...
-def encodingcorr(betas, ds, part_attr='chunks'):
+# add optimization...
+def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     # iterate through the attributes of the dataset
-    des = np.array(betas.sa['regressors']).T
+    # get the betas that correspond to this.. but how if we've already picked?
+    if not idx is None:
+        des = np.array(betas.sa['regressors']).T[idx,:]
+        ds = ds[idx].copy()
+    else:
+        des = np.array(betas.sa['regressors']).T
     # need to only pull the correct betas...
     res = []
     for i in ds.sa[part_attr].unique:
@@ -58,7 +63,7 @@ def encodingcorr(betas, ds, part_attr='chunks'):
         thesebetas = []
         for j in trainidx:
             thesebetas.append(betas.samples[betas.chunks==j])
-        estbetas = np.mean(np.dstack(thesebetas), axis=2)
+        estbetas = np.mean(np.dstack(thesebetas), axis=-1)
         pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
                                                estbetas)
 
@@ -72,10 +77,6 @@ def encodingcorr(betas, ds, part_attr='chunks'):
         res.append(corrs)
     from mvpa2.datasets import Dataset
     return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
-
-
-
-
 
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
@@ -97,17 +98,6 @@ for sub in subList.keys():
     # refit events and regress...
     # get timing data from timing files
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
-    # estimate HRF from picture runs for language, and vice versa
-    # now: make timing files for each feature that encompass every timepoint but with different intensities
-    # desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
-    #                             design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-    #                             glmfit_kwargs=None, regr_attrs=None)
-    # GLM
-    # normal regression. doesn't use desX from above.
-    evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=(thisContrast, 'chunks'),
-                                  design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-                                  return_model=True)
 
     # we can model out motion and just not use those betas.
     # Ridge
@@ -130,45 +120,28 @@ for sub in subList.keys():
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
     lclf = sklm.SKLRegressionMapper(regressor_names, [], lm.Ridge(), return_design=True)
     betas = lclf(rds) # not sure if i need to regress out chunkwise mean too
-
-    lres = encodingcorr(betas, thisDS[thisDS.chunks <= 3], part_attr='chunks')
+    lbetas = betas.copy()
+    lres = encodingcorr(betas, thisDS, lidx, part_attr='chunks')
     # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
     print 'language ' + str(np.mean(lres))
-    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
+    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Lridge.nii.gz'))
     del lres  # just cleaning up
     # pictures within
-    pres = encodingcorr(betas, thisDS[thisDS.chunks >3], part_attr='chunks')
+    pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
+    pres = encodingcorr(betas, thisDS, pidx, part_attr='chunks')
     print 'pictures: ' + str(np.mean(pres))
-    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
+    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Pridge.nii.gz'))
     del pres
 
-    crossSet = rds.copy()
+    crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
-    cres = runCVBootstrap(crossSet, desX)
+    cres = encodingcorr(betas, crossSet, part_attr='chunks')
     print 'cross: ' + str(np.mean(cres))
-    map2nifti(thisDS, cres[0]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_P2Lridge.nii.gz'))
-    map2nifti(thisDS, cres[1]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_L2Pridge.nii.gz'))
-
-# maybe add this stuff later.
-# # some regressors might be corresponding not to original condition_attr
-# # so let's separate them out
-# regressor_names = model_params.sa[glm_condition_attr].value
-# condition_regressors = np.array([v in glm_condition_attr_map.values()[0]
-#                                  for v in regressor_names])
-# assert (condition_regressors.dtype == np.bool)
-# if not np.all(condition_regressors):
-#     # some regressors do not correspond to conditions and would need
-#     # to be taken into a separate dataset
-#     model_params.a['add_regs'] = model_params[~condition_regressors]
-#     # then we process the rest
-#     model_params = model_params[condition_regressors]
-#     regressor_names = model_params.sa[glm_condition_attr].value
-#
-# # now define proper condition sa's
-# for con, con_map in glm_condition_attr_map.iteritems():
-#     model_params.sa[con] = [con_map[v] for v in regressor_names]
-# model_params.sa.pop(glm_condition_attr)  # remove generated one
-# return model_params
-
+    map2nifti(thisDS, cres[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lridge.nii.gz'))
+    map2nifti(thisDS, cres[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding',sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Pridge.nii.gz'))
 

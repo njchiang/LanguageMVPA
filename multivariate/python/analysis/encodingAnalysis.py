@@ -17,12 +17,11 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-import numpy as np
 # plat = 'usb'
-debug = False
+# debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
-roi = 'grayMatter'
+roi = 'langNet'
 filterLen = 49
 filterOrd = 3
 if debug:
@@ -37,8 +36,8 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 # add everything as a sample attribute
 beta_events = lmvpa.loadevents(paths, subList)
 
-import sklearn.linear_model as lm
-import SKLMapper as sklm
+# import sklearn.linear_model as lm
+# import SKLMapper as sklm
 import BootstrapRidgeMapper as bsr
 import numpy as np
 import copy
@@ -92,7 +91,6 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
     # later this will loop
 
 
-
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
@@ -126,7 +124,7 @@ for sub in subList.keys():
                                   return_model=True)
 
     # Ridge
-    desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
+    desX, rds = lmvpa.make_fulldesignmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                      glmfit_kwargs=None, regr_attrs=None)
     # language within
@@ -154,25 +152,5 @@ for sub in subList.keys():
     map2nifti(thisDS, cres[0]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_P2Lridge.nii.gz'))
     map2nifti(thisDS, cres[1]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_L2Pridge.nii.gz'))
 
-# maybe add this stuff later.
-# # some regressors might be corresponding not to original condition_attr
-# # so let's separate them out
-# regressor_names = model_params.sa[glm_condition_attr].value
-# condition_regressors = np.array([v in glm_condition_attr_map.values()[0]
-#                                  for v in regressor_names])
-# assert (condition_regressors.dtype == np.bool)
-# if not np.all(condition_regressors):
-#     # some regressors do not correspond to conditions and would need
-#     # to be taken into a separate dataset
-#     model_params.a['add_regs'] = model_params[~condition_regressors]
-#     # then we process the rest
-#     model_params = model_params[condition_regressors]
-#     regressor_names = model_params.sa[glm_condition_attr].value
-#
-# # now define proper condition sa's
-# for con, con_map in glm_condition_attr_map.iteritems():
-#     model_params.sa[con] = [con_map[v] for v in regressor_names]
-# model_params.sa.pop(glm_condition_attr)  # remove generated one
-# return model_params
 
 
