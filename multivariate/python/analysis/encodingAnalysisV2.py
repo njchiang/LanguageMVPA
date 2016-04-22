@@ -19,11 +19,11 @@ else:
     debug = False
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax', 'verb']
+thisContrast = ['syntax']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-alpha=150
+alpha = 150
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
     subList = {'LMVPA005': subList['LMVPA005']}
@@ -45,10 +45,6 @@ import os
 from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
-
-
-# i really need to just train on chunks though...
-# add optimization...
 def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     # iterate through the attributes of the dataset
     # get the betas that correspond to this.. but how if we've already picked?
