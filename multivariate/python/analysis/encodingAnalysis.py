@@ -10,6 +10,7 @@ import sys
 # initialize stuff
 if sys.platform == 'darwin':
     plat = 'mac'
+    plat = 'usb'
     sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
     debug = True
 else:
@@ -17,7 +18,6 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-# plat = 'usb'
 # debug = True
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'syntax'
@@ -118,10 +118,10 @@ for sub in subList.keys():
     #                             glmfit_kwargs=None, regr_attrs=None)
     # GLM
     # normal regression. doesn't use desX from above.
-    evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=(thisContrast, 'chunks'),
-                                  design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-                                  return_model=True)
+    # evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
+    #                               condition_attr=(thisContrast, 'chunks'),
+    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+    #                               return_model=True)
 
     # Ridge
     desX, rds = lmvpa.make_fulldesignmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
@@ -133,17 +133,20 @@ for sub in subList.keys():
     lds.matrix = lds.matrix[lidx]
     lres = runCVBootstrap(rds.copy()[lidx], lds)
     print 'language ' + str(np.mean(lres))
-    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
-    del lds, lres  # just cleaning up
+    # map2nifti(thisDS, lres).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
+    # del lds, lres  # just cleaning up
     # pictures within
     pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
     pds = copy.copy(desX)
     pds.matrix = pds.matrix[pidx]
     pres = runCVBootstrap(rds.copy()[pidx], pds)
     print 'pictures: ' + str(np.mean(pres))
-    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
-    del pds, pres
-
+    # map2nifti(thisDS, pres).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
+    # del pds, pres
+    from mvpa2.base import dataset
+    map2nifti(thisDS, dataset.vstack([lres, pres]))\
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_ridge.nii.gz'))
+    del lres, pres
     crossSet = rds.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2

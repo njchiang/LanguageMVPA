@@ -34,7 +34,7 @@ class SKLRegressionMapper(Mapper):
             ``model`` for an instance of the fitted GLM. The type of
             this instance dependent on the actual implementation used.""")
 
-    def __init__(self, regs=[], add_regs=None, clf=None, **kwargs):
+    def __init__(self, regs=[], add_regs=None, clf=None, part_attr=None, **kwargs):
         """
         Parameters
         ----------
@@ -53,6 +53,7 @@ class SKLRegressionMapper(Mapper):
         if add_regs is None:
             add_regs = tuple()
         self.add_regs = tuple(add_regs)
+        self._part_attr = part_attr
 
     def _build_design(self, ds):
         X = None
@@ -88,9 +89,21 @@ class SKLRegressionMapper(Mapper):
 
     def _fit_model(self, ds, X, reg_names):
         # a model of sklearn linear model
-        glm = self._get_clf()
-        glm.fit(X, ds.samples)
-        out = Dataset(glm.coef_.T, sa={self.get_space(): reg_names})
+        if self._part_attr is None:
+            glm = self._get_clf()
+            glm.fit(X, ds.samples)
+            out = Dataset(glm.coef_.T, sa={'regressor_names': reg_names})
+        else:
+            glm = []
+            out = []
+            for i in ds.sa[self._part_attr].unique:
+                thism=self._get_clf()
+                thism.fit(X[ds.chunks == i], ds[ds.chunks == i].samples)
+                outi = Dataset(thism.coef_.T, sa={'regressor_names': reg_names,
+                                                  self._part_attr: i*np.ones(X.shape[1])})
+                out.append(outi)
+            from mvpa2.base import dataset
+            out = dataset.vstack(out)
         return glm, out
 
     def _get_y(self, ds):
@@ -118,16 +131,18 @@ class SKLRegressionMapper(Mapper):
         """
         reg_names, X = self._build_design(data)
         model, out = self._fit_model(data, X, reg_names)
-        out.sa['regressor_names'] = [r.split('+')[0] for r in reg_names]
-        out.sa['chunks'] = np.array([r.split('+')[-1] for r in reg_names], dtype=np.int)
+        if self._part_attr is None:
+            out.sa['regressor_names'] = [r.split('+')[0] for r in reg_names]
+            out.sa['chunks'] = np.array([r.split('+')[-1] for r in reg_names], dtype=np.int)
         out.fa.update(data.fa)
         out.a.update(data.a) # this last one might be a bit to opportunistic
         # determine the output
         if self.params.return_design:
             if not len(out) == len(X.T):
-                raise ValueError("cannot include GLM regressors as sample "
-                                 "attributes (dataset probably contains "
-                                 "something other than parameter estimates")
+                X = np.repeat(X, len(out)/len(X.T), 1)
+                # raise ValueError("cannot include GLM regressors as sample "
+                #                  "attributes (dataset probably contains "
+                #                  "something other than parameter estimates")
             out.sa['regressors'] = X.T
         if self.params.return_model:
             out.a['model'] = model

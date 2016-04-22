@@ -9,7 +9,8 @@ todo: add ridge regression, maybe try crossmodal classification"""
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
-    plat = 'mac'
+    plat = 'usb'
+    # plat = 'mac'
     sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
     debug = True
 else:
@@ -17,12 +18,12 @@ else:
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
 import lmvpautils as lmvpa
-# plat = 'usb'
-# debug = True
+debug = False
 thisContrast = ['syntax', 'verb']
-roi = 'langNet'
+roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
+alpha=150
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
     subList = {'LMVPA005': subList['LMVPA005']}
@@ -53,6 +54,7 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     # get the betas that correspond to this.. but how if we've already picked?
     if not idx is None:
         des = np.array(betas.sa['regressors']).T[idx,:]
+        betas = betas
         ds = ds[idx].copy()
     else:
         des = np.array(betas.sa['regressors']).T
@@ -63,7 +65,8 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
         thesebetas = []
         for j in trainidx:
             thesebetas.append(betas.samples[betas.chunks==j])
-        estbetas = np.mean(np.dstack(thesebetas), axis=-1)
+        # estbetas = np.vstack(thesebetas)
+        estbetas = np.mean(np.dstack(thesebetas), axis=-1) # take mean of all betas to predict...
         pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
                                                estbetas)
 
@@ -114,27 +117,32 @@ for sub in subList.keys():
         if searchstring in rn:
             regressor_names.append(rn)
     regressor_names.sort()
+    regressor_names.append('constant')
 
     # chunks refers to the sa. seems to be a copying method.
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
-    lclf = sklm.SKLRegressionMapper(regressor_names, [], lm.Ridge(), return_design=True)
+    lclf = sklm.SKLRegressionMapper(regs=regressor_names, add_regs=[], clf=lm.Ridge(alpha=alpha), part_attr='chunks',
+                                    return_design=True)
     betas = lclf(rds) # not sure if i need to regress out chunkwise mean too
     lbetas = betas.copy()
     lres = encodingcorr(betas, thisDS, lidx, part_attr='chunks')
     # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
     print 'language ' + str(np.mean(lres))
-    map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Lridge.nii.gz'))
-    del lres  # just cleaning up
+    # map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(
+    #     os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Lridge.nii.gz'))
+
     # pictures within
     pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
     pres = encodingcorr(betas, thisDS, pidx, part_attr='chunks')
     print 'pictures: ' + str(np.mean(pres))
-    map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Pridge.nii.gz'))
-    del pres
-
+    # map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(
+    #     os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Pridge.nii.gz'))
+    from mvpa2.base import dataset
+    map2nifti(thisDS, dataset.vstack([lres, pres])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+                                  '_a' + str(alpha) +'_ridge.nii.gz'))
+    del lres,pres
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2

@@ -216,7 +216,8 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
                                  "happen.  Choose another name if defined it"
                                  % (ei, glm_condition_attr))
             ei[glm_condition_attr] = \
-                'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con, 'chunks'])
+                'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con])
+                # 'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con, 'chunks'])
 
     evvars = events2dict(e)
     add_paradigm_kwargs = {}
@@ -277,7 +278,7 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
 
         for reg in ds.sa.keys():
             if str(con)+'0' in reg:
-                ds.sa['glm_label_probe+' + reg.split('+')[-1]] = ds.sa.pop(reg)
+                ds.sa['glm_label_probe'] = ds.sa.pop(reg)
 
     # concatenate X... add chunk regressors...
     # if 'chunks' in ds.sa.keys():
