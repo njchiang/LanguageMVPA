@@ -6,6 +6,7 @@
 """Encoding analysis: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
 then...
 todo: add ridge regression, maybe try crossmodal classification"""
+## use RidgeCV and specify alphas.
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -19,11 +20,10 @@ else:
     debug = False
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax']
+thisContrast = ['syntax', 'verb']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-alpha = 150
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
     subList = {'LMVPA005': subList['LMVPA005']}
@@ -77,6 +77,49 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     from mvpa2.datasets import Dataset
     return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
 
+
+def findalpha(ds, X, part='chunks', nchunks=2, nboots=50, alphas=None):
+    # runs cross validation on the chunks of the dataset (leave-one-out)
+    if alphas is None:
+        alphas = np.logspace(0, 3, 20)
+    # push design into source dataset
+    # mds=[]
+    res = []
+    from mvpa2.datasets import Dataset
+    for c in np.arange(len(ds.sa[part].unique)):
+        # need to combine regressors into one...
+        trainidx = ds.sa[part].value != ds.sa[part].unique[c]
+        testidx = ds.sa[part].value == ds.sa[part].unique[c]
+        glm_regs = [(reg, X.matrix[trainidx, i]) for i, reg in enumerate(X.names)]
+        # MUST CONTAIN  chunklen and nchunks
+        glmfit_kwargs = {'chunklen': np.sum(trainidx) / 5 / nchunks,
+                         'nchunks': nchunks,
+                         'alphas': alphas,
+                         'nboots': nboots,
+                         'corrmin': 0.2,
+                         'joined': None,
+                         'singcutoff': 1e-10,
+                         'normalpha': False,
+                         'single_alpha': True,
+                         'use_corr': True}
+        # first parameter is null because we have made our own design matrix (add_regs)
+        # now this is working. need to add functionality to append chunks
+        bootstrapridge = bsr.BootstrapRidgeMapper([], glmfit_kwargs=glmfit_kwargs,
+                                                  add_regs=glm_regs,
+                                                  return_model=True)
+
+        model_params = bootstrapridge(ds[trainidx])
+        pred = np.dot(X.matrix[testidx], model_params.samples)
+        # model_params.sa[part] = np.repeat(ds.sa[part].unique[c],
+        #                                   len(model_params), axis=0)
+        # mds.append(model_params)
+        resvar = (ds.samples[testidx] - pred).var(0)
+        Rsqs = 1 - (resvar / ds.samples[testidx].var(0))
+        corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+        res.append(corrs)
+    return Dataset(np.vstack(res), sa={part: ds.sa[part].unique})
+
+
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
@@ -114,6 +157,7 @@ for sub in subList.keys():
             regressor_names.append(rn)
     regressor_names.sort()
     regressor_names.append('constant')
+    alpha = np.logspace(0, 3, 20)
 
     # chunks refers to the sa. seems to be a copying method.
     # language within
