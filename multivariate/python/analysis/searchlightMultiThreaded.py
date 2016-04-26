@@ -3,18 +3,18 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # using the chunks to do cross-classification.
 import sys
-sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
+sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 from mvpa2.suite import *
 import lmvpautils as lmvpa
 import os
 
-paths, subList, contrasts, maskList = lmvpa.initpaths()
+paths, subList, contrasts, maskList = lmvpa.initpaths('win')
 
 # initialize subjects, masks, contrast
 # mask = maskList[4]
 # con = contrasts[5]
 mask = "grayMatter"
-con = "RelCan"
+con = "syntax"
 if 'cross' in con:
     slType = "cross classification"
     slInt = 0
@@ -28,7 +28,7 @@ else:
 #     clf = lmvpa.initrsa(con)
 # else:
 #     print "Running SVM"
-attr = SampleAttributes(os.path.join(paths[4], (con + "_attribute_literal_labels.txt")))
+attr = SampleAttributes(os.path.join(paths[1], "labels", (con + "_attribute_literal_labels.txt")))
 clf = LinearNuSVMC()
 # clf=RbfNuSVMC()
 cv = CrossValidation(clf, NFoldPartitioner())
@@ -66,8 +66,7 @@ def run_cv_sl(sl, ds, t, p):
     res = thisSL(fds)
     print "done in " + str((time.time() - wsc_start_time,)) + " seconds"
     res = error2acc(res)
-    map2nifti(res, imghdr=ds.a.imghdr).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_' + t + '_cvsl.nii.gz'))
-
+    return res
 
 def run_cc_sl(sl, ds, p):
     fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
@@ -78,20 +77,23 @@ def run_cc_sl(sl, ds, p):
     l2p = res.samples[0]
     p2l = res.samples[1]
     map2nifti(ds, l2p).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_L2P_ccsl.nii.gz'))
-    map2nifti(ds, p2l).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA',, sub + '_' + mask + '_' + con + '_P2L_ccsl.nii.gz'))
+    map2nifti(ds, p2l).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_P2L_ccsl.nii.gz'))
 
 print "Loaded class descriptions... Let's go!"
 for i in range(0, len(subList)):
-    sub = subList[i]
+    sub = subList.keys()[i]
     fullSet = lmvpa.loadsubbetas(paths, sub, m=mask, a=attr)
     if slInt == 1:
-        cvSL = sphere_searchlight(cv, radius=2, postproc=mean_sample())
+        cvSL = sphere_searchlight(cv, radius=2)
         lFds = fullSet[0:32, :]
-        run_cv_sl(cvSL, lFds, 'lang', paths)
+        lres = run_cv_sl(cvSL, lFds, 'lang', paths)
         # run_splitcv_sl(cvSL, lFds, 'lang')
         pFds = fullSet[32:64, :]
-        run_cv_sl(cvSL, pFds, 'pic', paths)
+        pres = run_cv_sl(cvSL, pFds, 'pic', paths)
         # run_splitcv_sl(cvSL, pFds, 'pic')
+        map2nifti(fullSet, vstack([lres, pres])).\
+            to_filename(os.path.join(
+            paths[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_cvsl.nii.gz'))
 
     elif slInt == 0:
         cvSL = sphere_searchlight(cv, radius=2)
