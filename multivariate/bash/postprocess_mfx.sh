@@ -7,6 +7,7 @@ doc
 model=${3}
 mask=${2}
 chance=${4}
+t=${5}
 projectDir=/Volumes/fmri/LanguageMVPA
 #projectDir=/Volumes/JEFF/UCLA/LMVPA
 desDir=/Users/njchiang/GitHub/LanguageMVPA/multivariate/bash
@@ -63,4 +64,5 @@ fslmerge -t ../${mask}_${model}_Group.nii.gz \
 ../std/std_LMVPA019_${mask}_${model}.nii.gz 
 
 randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} \
-	-v 5 -d $desDir/mfx_design.mat -t $desDir/mfx_design.con -T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
+	-v 5 -d $desDir/${t}mfx_full_design.mat -t $desDir/${t}mfx_full_design.con \
+	-T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
