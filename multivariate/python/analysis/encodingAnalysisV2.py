@@ -20,7 +20,7 @@ else:
     debug = False
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax', 'verb']
+thisContrast = ['anim', 'ap', 'cr', 'verb']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
@@ -157,8 +157,8 @@ for sub in subList.keys():
             regressor_names.append(rn)
     regressor_names.sort()
     regressor_names.append('constant')
-    alpha = np.logspace(0, 3, 20)
-
+    # alpha = np.logspace(0, 3, 20)
+    alpha = 150
     # chunks refers to the sa. seems to be a copying method.
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
