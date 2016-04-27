@@ -73,18 +73,13 @@ for sub in subList.keys():
                                   return_model=True)
 
     fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
-
     fds = fds[fds.targets != '0']
+    lidx = fds.chunks < fds.sa['chunks'].unique[len(fds.sa['chunks'].unique)/2]
+    pidx = fds.chunks >= fds.sa['chunks'].unique[len(fds.sa['chunks'].unique) / 2]
 
+    lfds = fds[lidx]
+    pfds = fds[pidx]
     # split data into language and pictures
-    from mvpa2.base import dataset
-    lfds = [fds[fds.sa['chunks'].value == fds.sa['chunks'].unique[i]]
-            for i in np.arange(len(fds.sa['chunks'].unique)/2)]
-    lfds = dataset.vstack(lfds)
-
-    pfds = [fds[fds.sa['chunks'].value == fds.sa['chunks'].unique[i]]
-            for i in np.arange(len(fds.sa['chunks'].unique) / 2, len(fds.sa['chunks'].unique))]
-    pfds = dataset.vstack(pfds)
 
 
     from sklearn import linear_model as lm
@@ -99,7 +94,6 @@ for sub in subList.keys():
     cv = CrossValidation(clf,
                          NFoldPartitioner(attr='chunks'),
                          errorfx=errorfx.mean_match_accuracy)
-    cv.untrain()
     lres = cv(lfds)
     print "language: " + str(np.mean(lres.samples))
     cv.untrain()

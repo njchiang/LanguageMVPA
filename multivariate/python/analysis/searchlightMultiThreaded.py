@@ -7,7 +7,7 @@ sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
 from mvpa2.suite import *
 import lmvpautils as lmvpa
 import os
-
+import searchlightutils as sl
 paths, subList, contrasts, maskList = lmvpa.initpaths('win')
 
 # initialize subjects, masks, contrast
@@ -54,31 +54,6 @@ def error2acc(d):
     d.samples += 1
     return d
 
-
-def run_cv_sl(sl, ds, t, p):
-    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
-    # is this necessary if i'm doing tstats? in toolbox it says zscore w.r.t. rest condition,
-    # but technically a tstat is already normalized?
-    zscore(fds)
-    wsc_start_time = time.time()
-    print "running " + str(t) + " at " + time.strftime("%H:%M:%S")
-    thisSL = sl
-    res = thisSL(fds)
-    print "done in " + str((time.time() - wsc_start_time,)) + " seconds"
-    res = error2acc(res)
-    return res
-
-def run_cc_sl(sl, ds, p):
-    fds = ds.copy(deep=False, sa=['targets', 'chunks'], fa=['voxel_indices'], a=['mapper'])
-    zscore(fds)
-    thisSL = sl
-    res = thisSL(fds)
-    res = error2acc(res)
-    l2p = res.samples[0]
-    p2l = res.samples[1]
-    map2nifti(ds, l2p).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_L2P_ccsl.nii.gz'))
-    map2nifti(ds, p2l).to_filename(os.path.join(p[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_P2L_ccsl.nii.gz'))
-
 print "Loaded class descriptions... Let's go!"
 for i in range(0, len(subList)):
     sub = subList.keys()[i]
@@ -86,10 +61,10 @@ for i in range(0, len(subList)):
     if slInt == 1:
         cvSL = sphere_searchlight(cv, radius=2)
         lFds = fullSet[0:32, :]
-        lres = run_cv_sl(cvSL, lFds, 'lang', paths)
+        lres = sl.run_cv_sl(cvSL, lFds, 'lang', paths)
         # run_splitcv_sl(cvSL, lFds, 'lang')
         pFds = fullSet[32:64, :]
-        pres = run_cv_sl(cvSL, pFds, 'pic', paths)
+        pres = sl.run_cv_sl(cvSL, pFds, 'pic', paths)
         # run_splitcv_sl(cvSL, pFds, 'pic')
         map2nifti(fullSet, vstack([lres, pres])).\
             to_filename(os.path.join(
@@ -97,7 +72,14 @@ for i in range(0, len(subList)):
 
     elif slInt == 0:
         cvSL = sphere_searchlight(cv, radius=2)
-        run_cc_sl(cvSL, fullSet, paths)
+        l2p, p2l = sl.run_cc_sl(cvSL, fullSet, paths)
+        map2nifti(fullSet, l2p).to_filename(
+            os.path.join(
+                paths[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_L2P_ccsl.nii.gz'))
+        map2nifti(fullSet, p2l).to_filename(
+            os.path.join(
+                paths[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_P2L_ccsl.nii.gz'))
+
     else:
         print "Something went wrong... exiting. \n"
         sys.exit()
