@@ -22,7 +22,7 @@ from sklearn import linear_model as lm
 from mvpa2.clfs.skl import SKLLearnerAdapter
 from mvpa2.clfs import svm
 # debug = True
-thisContrast = 'anim'
+thisContrast = 'verb'
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3

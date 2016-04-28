@@ -73,6 +73,7 @@ for i in range(0, len(subList)):
     elif slInt == 0:
         cvSL = sphere_searchlight(cv, radius=2)
         l2p, p2l = sl.run_cc_sl(cvSL, fullSet, paths)
+        # ERROR HERE, THEY'RE BACKWARDS
         map2nifti(fullSet, l2p).to_filename(
             os.path.join(
                 paths[0], 'Maps', 'PyMVPA', sub + '_' + mask + '_' + con + '_L2P_ccsl.nii.gz'))
