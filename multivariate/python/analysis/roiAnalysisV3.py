@@ -5,6 +5,7 @@
 # because we're using an encoding model.
 """V3.0: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
 runs a beta extraction for each trial, subs in the corresponding labels and classifies."""
+# try doing whole brain classification with heavy feature selection
 import sys
 import numpy as np
 # initialize stuff
