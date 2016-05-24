@@ -175,9 +175,10 @@ def amendtimings(ds, b):
                 ev['amplitude'] = 1
             if ev['duration'] is not '0':
                 events.append(ev)
-        idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
-        # not sure i like the +2, but i think it's right.
-        ds.sa.time_coords[ds.sa['chunks'].value == i+2] += ds.sa.time_coords[idx-1] + TR
+
+        if i < len(b):
+            idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
+            ds.sa.time_coords[ds.sa['chunks'].value == i+1] += ds.sa.time_coords[idx-1] + TR
     return ds, events
 #####################################
 # regression stuff
