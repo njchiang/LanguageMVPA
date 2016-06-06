@@ -8,7 +8,9 @@ Current version of encoding analysis: takes timing files for betas and makes des
 Two ways to do cross-validation:
     1) run same regressors on each chunk
     2) run everything at once, but have a separate set of regressors per chunk and index them accordingly.
-
+This script runs version (1)
+let R = number of regressors
+betas will be 4R by nVox.
 """
 import sys
 # initialize stuff

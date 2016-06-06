@@ -1,7 +1,131 @@
 % PTB Script that runs a full experiment testing the Simon Effect
 
+sentences={'a',
+
+
+for triali=1:testtrialnum    
+
+    % redraw the backgroup
+	Screen('FillRect',window,  bgcolor,winRect);
+    indextest1 = testsamples(testidrand(triali));
+    rectsizey=sqix(totalsampbins(indextest1,1));%sqxsample(indexrand(triali));
+    circlecolori=icirclum(totalsampbins(indextest1,2));
+    rectcolor=(icolor(:,totalsampbins(indextest1,3))*255)';%[1 1 1]*128;%((triali-1)*samplenum+(i-1)*30);
+
+    % redraw the frames
+    for i=3:3
+        squarerange(i,:)=[centeri(i,1)-framesize/2 centeri(i,2)-framesize/2 centeri(i,1)+framesize/2 centeri(i,2)+framesize/2];
+        Screen('FrameRect',window,  [255 255 255],squarerange(i,:),[3]);
+
+    end;
+            Screen('Flip',window);
+    WaitSecs(1);
+    
+    % draw the random sample
+    for i=3:3
+        rectpos(i,:) = [centeri(i,1)-rectsizey/2 centeri(i,2)-rectsizey/2 centeri(i,1)+rectsizey/2 centeri(i,2)+rectsizey/2];
+	end;
+    
+    for i=3:3
+        % draw the square
+        Screen('FillRect', window, rectcolor,rectpos(i,:));        
+        % draw circle
+        Screen('FillOval',window,  circlecolori,circlepos(i,:));
+
+    end;   
+    %%%%%%%%%%%%%%%%%%%%%%%
+    
+    ratenum = [-1 1 ];  %no, yes
+    rating = round(rand(1,1)*100)/100;
+    ratinginit = rating;
+	ypos = centeri(i,2)+framesize/2+100;
+	squaresize = 100;
+    xstart = centeri(i,1);%+ratenum(ratei)*(squaresize*1.5);
+    squarerange=[xstart-squaresize ypos-squaresize/5 xstart+squaresize ypos+squaresize/5];
+    Screen('FrameRect',window,[200 200 200], squarerange,[3]);
+    squarerangersp=[xstart-squaresize ypos-squaresize/5 xstart-squaresize+2*squaresize*rating ypos+squaresize/5];
+    Screen('FillRect',window,[200 200 200], squarerangersp);
+    
+    Screen('TextSize',window,40);
+    Screen('DrawText',window,'NO(0%)',xstart-squaresize-180, ypos+squaresize/5,[200 200 200]);%
+    Screen('DrawText',window,'YES(100%)',xstart+squaresize+30, ypos+squaresize/5,[200 200 200]);%
+
+    ShowCursor(0);
+    
+    FlushEvents('keyDown');
+    
+    % Wait for a click and hide the cursor
+	Screen('TextSize',window,30);
+	Screen('DrawText',window,'Drag mouse (i.e. hold button down) to response',xstart-400,ypos-500,[200 200 200]);
+	Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
+        Screen('Flip',window);
+
+    while (1)
+		[x,y,buttons] = GetMouse;
+		if buttons(1)
+		  break;
+		end
+	end
+    
+    % Loop and track the mouse, drawing the contour
+	[theX,theY] = GetMouse;
+	thePoints = [theX theY];
+    squarerangersp=[xstart-squaresize ypos-squaresize/5 theX ypos+squaresize/5];
+    Screen('FillRect',window,[200 200 200], squarerangersp);
+    
+% 	Screen(theWindow,'DrawLine',255,theX,theY,theX,theY);
+	sampleTime = 0.01;
+	startTime = GetSecs;
+	nextTime = startTime+sampleTime;
+
+	while (1)
+		[x,y,buttons] = GetMouse;	
+        if ~buttons(1)
+            break;
+        end
+		if (x ~= theX | y ~= theY) & x>=xstart-squaresize & x<=xstart+squaresize
+		
+            squarerangersp=[xstart-squaresize ypos-squaresize/5 theX ypos+squaresize/5];
+            Screen('FillRect',window,[0 0 0], squarerange);
+            Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[0 0 0]);%
+            Screen('FrameRect',window,[200 200 200], squarerange,[3]);
+            Screen('FillRect',window,[200 200 200], squarerangersp);
+			theX = x; theY = y;
+            
+            rating = (theX-(xstart-squaresize))/2/squaresize;
+            Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
+            
+            %%%%%%%%%%%%%%%%%%%
+                Screen('Flip',window); % deletes the rest of the screen
+            %%%%%%%%%%%%%%%%%%%%
+           
+		end
+		if (GetSecs > nextTime)
+			thePoints = [thePoints ; x y];
+			nextTime = nextTime+sampleTime;
+		end
+	end;
+    
+    rsttest(triali)=rating;
+    datarst(triali,1)=rating;
+    datarst(triali,2)=totalsampbins(indextest1,1);
+    datarst(triali,3)=totalsampbins(indextest1,2);
+    datarst(triali,4)=totalsampbins(indextest1,3);
+    fprintf(fp,'%d\t%f\t%d\t%d\t%d\t%f\n ',triali,rsttest(triali),totalsampbins(indextest1,1),totalsampbins(indextest1,2),...
+    totalsampbins(indextest1,3),ratinginit) ;
+
+    HideCursor;
+    SetMouse(center(1),center(2)+200,window);
+    WaitSecs(1);    
+end;
+
+%{
+
+load('Sentences.mat')
 DEBUG=true;
 nBlocks=8;
+%}
+
 
 %% Part One: Initialization
 Screen('Preference', 'VisualDebugLevel', 1);
