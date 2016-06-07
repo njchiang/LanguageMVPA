@@ -26,10 +26,12 @@ else:
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['anim', 'syntax', 'verb']
+thisContrast = ['verb']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
+alpha = 150
+
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
     subList = {'LMVPA005': subList['LMVPA005']}
@@ -50,6 +52,7 @@ from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 
+# use the betas to predict timeseries for left out chunk
 def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     # iterate through the attributes of the dataset
     # get the betas that correspond to this.. but how if we've already picked?
@@ -162,7 +165,6 @@ for sub in subList.keys():
     regressor_names.sort()
     regressor_names.append('constant')
     # alpha = np.logspace(0, 3, 20)
-    alpha = 150
     # chunks refers to the sa. seems to be a copying method.
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
