@@ -3,52 +3,84 @@
 # vi: set ft=python sts=4 ts=4 sw=4 et:
 # this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
 # because we're using an encoding model.
-"""Encoding analysis: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
-then...
-todo: add ridge regression, maybe try crossmodal classification"""
+"""
+Current version of encoding analysis: takes timing files for betas and makes design matrix out of them.
+Two ways to do cross-validation:
+    1) run same regressors on each chunk
+    2) run everything at once, but have a separate set of regressors per chunk and index them accordingly.
+
+"""
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
-    plat = 'mac'
     plat = 'usb'
+    # plat = 'mac'
     sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
     debug = True
 else:
     plat = 'win'
     sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
     debug = False
+
 import lmvpautils as lmvpa
-# debug = True
-paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-thisContrast = 'syntax'
-roi = 'langNet'
+debug = False
+thisContrast = ['anim', 'syntax', 'verb']
+roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
+paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
-    subList = {'LMVPA003': subList['LMVPA003']}
-# load things in as trial type for easy regression, then swap out labels accordingly
-# do we actually want to load all data simultaneously? or one brain at a time...
+    subList = {'LMVPA005': subList['LMVPA005']}
+
 # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
 mc_params = lmvpa.loadmotionparams(paths, subList)
 # events for beta extraction
-# beta_events = lmvpa.loadevents(paths, subList, c='trial_type')
 # add everything as a sample attribute
 beta_events = lmvpa.loadevents(paths, subList)
 
-# import sklearn.linear_model as lm
-# import SKLMapper as sklm
+import sklearn.linear_model as lm
+import SKLMapper as sklm
 import BootstrapRidgeMapper as bsr
 import numpy as np
-import copy
 import os
 from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
-import mvpa2.datasets.eventrelated as er
 
-# i really need to just train on chunks though...
-def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
+def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
+    # iterate through the attributes of the dataset
+    # get the betas that correspond to this.. but how if we've already picked?
+    if not idx is None:
+        des = np.array(betas.sa['regressors']).T[idx, :]
+        ds = ds[idx].copy()
+    else:
+        des = np.array(betas.sa['regressors']).T
+    # need to only pull the correct betas...
+    res = []
+    for i in ds.sa[part_attr].unique:
+        trainidx = ds.sa['chunks'].unique[ds.sa['chunks'].unique != i]
+        thesebetas = []
+        for j in trainidx:
+            thesebetas.append(betas.samples[betas.chunks == j])
+        # estbetas = np.vstack(thesebetas)
+        estbetas = np.mean(np.dstack(thesebetas), axis=-1) # take mean of all betas to predict...
+        pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
+                      estbetas)
+
+
+        # model_params.sa[part] = np.repeat(ds.sa[part].unique[c],
+        #                                   len(model_params), axis=0)
+        # mds.append(model_params)
+        resvar = (ds.samples[ds.chunks == i] - pred).var(0)
+        Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
+        corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+        res.append(corrs)
+    from mvpa2.datasets import Dataset
+    return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
+
+
+def findalpha(ds, X, part='chunks', nchunks=2, nboots=50, alphas=None):
     # runs cross validation on the chunks of the dataset (leave-one-out)
     if alphas is None:
         alphas = np.logspace(0, 3, 20)
@@ -88,7 +120,6 @@ def runCVBootstrap(ds, X, part='chunks', nchunks=2, nboots=100, alphas=None):
         corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
         res.append(corrs)
     return Dataset(np.vstack(res), sa={part: ds.sa[part].unique})
-    # later this will loop
 
 
 for sub in subList.keys():
@@ -111,49 +142,56 @@ for sub in subList.keys():
     # refit events and regress...
     # get timing data from timing files
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
-    # estimate HRF from picture runs for language, and vice versa
-    # now: make timing files for each feature that encompass every timepoint but with different intensities
-    # desX = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=['targets', 'chunks'],
-    #                             design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-    #                             glmfit_kwargs=None, regr_attrs=None)
-    # GLM
-    # normal regression. doesn't use desX from above.
-    # evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-    #                               condition_attr=(thisContrast, 'chunks'),
-    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-    #                               return_model=True)
 
+    # we can model out motion and just not use those betas.
     # Ridge
-    desX, rds = lmvpa.make_fulldesignmat(rds, events, time_attr='time_coords', condition_attr=[thisContrast],
+    if isinstance(thisContrast, basestring):
+        thisContrast=[thisContrast]
+    # do i want to do this crossed with chunks for everything?...
+    desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
-                                     glmfit_kwargs=None, regr_attrs=None)
+                                     regr_attrs=None)
+
+    searchstring = 'glm_label' # only change if you want to do a specific subset
+    regressor_names = []
+    for rn in rds.sa.keys():
+        if searchstring in rn:
+            regressor_names.append(rn)
+    regressor_names.sort()
+    regressor_names.append('constant')
+    # alpha = np.logspace(0, 3, 20)
+    alpha = 150
+    # chunks refers to the sa. seems to be a copying method.
     # language within
     lidx = thisDS.chunks < thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique)/2]
-    lds = copy.copy(desX)
-    lds.matrix = lds.matrix[lidx]
-    lres = runCVBootstrap(rds.copy()[lidx], lds)
+    lclf = sklm.SKLRegressionMapper(regs=regressor_names, add_regs=[], clf=lm.Ridge(alpha=alpha), part_attr='chunks',
+                                    return_design=True)
+    betas = lclf(rds) # not sure if i need to regress out chunkwise mean too
+    lbetas = betas.copy()
+    lres = encodingcorr(betas, thisDS, lidx, part_attr='chunks')
+    # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
     print 'language ' + str(np.mean(lres))
-    # map2nifti(thisDS, lres).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Lridge.nii.gz'))
-    # del lds, lres  # just cleaning up
+    # map2nifti(thisDS, np.mean(lres, axis=0)).to_filename(
+    #     os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Lridge.nii.gz'))
+
     # pictures within
     pidx = thisDS.chunks >= thisDS.sa['chunks'].unique[len(thisDS.sa['chunks'].unique) / 2]
-    pds = copy.copy(desX)
-    pds.matrix = pds.matrix[pidx]
-    pres = runCVBootstrap(rds.copy()[pidx], pds)
+    pres = encodingcorr(betas, thisDS, pidx, part_attr='chunks')
     print 'pictures: ' + str(np.mean(pres))
-    # map2nifti(thisDS, pres).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_Pridge.nii.gz'))
-    # del pds, pres
+    # map2nifti(thisDS, np.mean(pres, axis=0)).to_filename(
+    #     os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_Pridge.nii.gz'))
     from mvpa2.base import dataset
-    map2nifti(thisDS, dataset.vstack([lres, pres]))\
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_ridge.nii.gz'))
-    del lres, pres
-    crossSet = rds.copy()
+    map2nifti(thisDS, dataset.vstack([lres, pres])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+                                  '_a' + str(alpha) +'_ridge.nii.gz'))
+    del lres,pres
+    crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
-    cres = runCVBootstrap(crossSet, desX)
+    cres = encodingcorr(betas, crossSet, part_attr='chunks')
     print 'cross: ' + str(np.mean(cres))
-    map2nifti(thisDS, cres[0]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_P2Lridge.nii.gz'))
-    map2nifti(thisDS, cres[1]).to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrast + '_L2Pridge.nii.gz'))
-
-
+    map2nifti(thisDS, cres[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lridge.nii.gz'))
+    map2nifti(thisDS, cres[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding',sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Pridge.nii.gz'))
 

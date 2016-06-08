@@ -7,7 +7,7 @@ subList = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005",
            "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019", "LMVPA020"]
 subData = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
            "LMVPA002": ["Run1", "Run2", "Run3", "Run4"],
-           "LMVPA003": ["Run1", "Run2", "Run3", "Run4"],
+           "LMVPA003": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
            "LMVPA005": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
            "LMVPA006": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],
            "LMVPA007": ["Run1", "Run2", "Run3", "Run4", "Run5", "Run6", "Run7", "Run8"],

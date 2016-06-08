@@ -11,8 +11,9 @@ model=${3}
 mask=${2}
 chance=${4}
 projectDir=/Volumes/fmri/LanguageMVPA
+#projectDir=/Volumes/JEFF/UCLA/LMVPA
 #projectDir=/media/sf_fmri/LanguageMVPA
-refImage=${projectDir}/fnirt/MNI152_T1_3mm_brain.nii.gz
+refImage=${projectDir}/MNI152_T1_3mm_brain.nii.gz
 refMask=${projectDir}/fnirt/MNI152_T1_3mm_brain_mask.nii.gz
 targetDir=${projectDir}/Maps/${1}
 
@@ -26,7 +27,7 @@ for indMap in `ls | grep _${mask}_${model}.nii.gz`
 do
 sub=`echo ${indMap} | cut -d '_' -f1`
 echo ${sub}
-fslmaths ${projectDir}/masks/sub/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
+fslmaths ${projectDir}/data/$sub/masks/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
 
 if [ "$chance" = "0" ]
 then
@@ -37,7 +38,7 @@ else
 fi
 
 
-regMat=${projectDir}/registration/${sub}_example_func2standard.mat
+regMat=${projectDir}/data/$sub/reg/${sub}_example_func2standard.mat
 
 flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} \
 	-applyxfm -init ${regMat}
