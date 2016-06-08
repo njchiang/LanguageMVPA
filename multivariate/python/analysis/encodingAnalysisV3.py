@@ -26,11 +26,11 @@ else:
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['verb']
+thisContrast = ['syntax']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-alpha = 150
+alpha = 1000
 
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
