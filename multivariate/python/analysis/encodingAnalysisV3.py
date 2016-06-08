@@ -17,11 +17,11 @@ import sys
 if sys.platform == 'darwin':
     plat = 'usb'
     # plat = 'mac'
-    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+    sys.path.append('/Users/njchiang/GitHub/python-fmri-utils/utils')
     debug = True
 else:
     plat = 'win'
-    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
+    sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
     debug = False
 
 import lmvpautils as lmvpa
