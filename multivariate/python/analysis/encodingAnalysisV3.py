@@ -11,6 +11,8 @@ Two ways to do cross-validation:
 This script runs version (1)
 let R = number of regressors
 betas will be 4R by nVox.
+should i include probe in the testing?
+compare to regular regression as baseline
 """
 import sys
 # initialize stuff
@@ -188,7 +190,7 @@ for sub in subList.keys():
     map2nifti(thisDS, dataset.vstack([lres, pres])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
                                   '_a' + str(alpha) +'_ridge.nii.gz'))
-    del lres,pres
+    del lres, pres
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
