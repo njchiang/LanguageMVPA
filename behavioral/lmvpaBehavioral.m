@@ -1,18 +1,19 @@
 function [] = lmvpaBehavioral()
 % PTB Script that runs a full experiment testing the LMVPA
-
+% to do... only probe upper or lower triangle
 %% parameters to adjust
 DEBUG=true;
 textSize=48;
-screenRatio = [0 0 .5 .5]; % offsetX offsetY sizeX sizeY
+screenRatio = [0 0 .8 .8]; % offsetX offsetY sizeX sizeY
 % the total number of sentences
-nTrialTypes = 4;
+nTrialTypes = 32;
 % set the indices of sentences to be used
 trialIdx=[1:nTrialTypes];
-nBlocks=4;
-displaytime=2;
-fixdur = 1;
+nBlocks=8;
+displayTimeMean=2; % randomly sample from exponential with expectation 2s
+fixDurMean = 1; % randomly sample from exponential with expectation 1s
 barSize = [100 20];
+trialSelector = 'upper'; % 'upper', 'lower', or 'all'
 
 %% Part One: Initialization
 Screen('Preference', 'VisualDebugLevel', 1);
@@ -29,6 +30,18 @@ load('sentences.mat');
 results = zeros([nTrialTypes, nTrialTypes, 2]);
 rng(seed)
 shuffledPairs = shuffleIdx(trialIdx, nTrialTypes);
+% top half or bottom half of matrix depending on sign
+if strcmp('upper', trialSelector)
+    triangleSelector = shuffledPairs(1,:) > shuffledPairs(2,:);
+elseif strcmp('lower', trialSelector)
+    triangleSelector = shuffledPairs(1,:) < shuffledPairs(2,:);
+else
+    triangleSelector = ones(1, size(shuffledPairs,2));
+end
+shuffledPairs = shuffledPairs(:, triangleSelector);
+
+fixDurVec =  exprnd(fixDurMean, size(shuffledPairs));
+displayTimeVec = exprnd(displayTimeMean, size(shuffledPairs));
 
 input('Press <enter> to begin');
 fullScreenSize=get(0,'ScreenSize');
@@ -47,21 +60,28 @@ for blocknumber = 1:nBlocks
     blockLength = size(shuffledPairs,2)/nBlocks;
     theseTrials = shuffledPairs(:, ...
         blockLength*(blocknumber-1) + [1:blockLength]); % the trials for this block
+    theseDisplayTimes = displayTimeVec(:, ...
+        blockLength*(blocknumber-1) + [1:blockLength]);
+    theseFixTimes = fixDurVec(:, ...
+        blockLength*(blocknumber-1) + [1:blockLength]);
     for trialnumber = 1:size(theseTrials, 2)
         % displaytime=Shuffle(displaytime);
         trialStartTime = Screen('Flip', win);
         
         %%%%%%%%%%% each trial %%%%%%%%%%%%%%
         trial1Time = displayText(win, ScreenSize, ...
-            Sentence{shuffledPairs(1, trialnumber)}, trialStartTime, fixdur);
+            Sentence{shuffledPairs(1, trialnumber)}, ...
+            trialStartTime, theseFixTimes(1, trialnumber));
         
         fix1Time = displayText(win, ScreenSize, '+', ...
-            trial1Time, displaytime);
+            trial1Time, theseDisplayTimes(1, trialnumber));
         
         trial2Time = displayText(win, ScreenSize, ...
-            Sentence{shuffledPairs(2, trialnumber)}, fix1Time, fixdur);
+            Sentence{shuffledPairs(2, trialnumber)}, ...
+            fix1Time, theseFixTimes(2, trialnumber));
         
-        fix2Time = displayText(win, ScreenSize, '+', trial2Time, displaytime);
+        fix2Time = displayText(win, ScreenSize, '+', ...
+            trial2Time, theseDisplayTimes(2, trialnumber));
         
         % collect rating here:
         nowTime=GetSecs;
@@ -86,7 +106,9 @@ end
 ShowCursor
 if (~DEBUG), ListenChar(0); end
 save(outfilename, 'results', 'shuffledPairs', 'seed', 'sinit');
-input('Thank you for participating. Press <enter> to exit');
+endExperimText='Thank you for participating. Press <enter> to exit';
+displayText(win, ScreenSize, endExperimText);
+input('Press <enter>');
 sca;
 
 end
@@ -112,7 +134,6 @@ function shuffledPairs = shuffleIdx(trialIdx, nTrialTypes)
 %pair the indices and delete the self-repeating pairs
 randPairs=CombVec(trialIdx, trialIdx);
 randPairs(:,1:nTrialTypes+1:end)=[];
-
 % shuffle the indices here
 pairIdx1=Shuffle(1:size(randPairs,1));
 pairIdx2=Shuffle(1:size(randPairs,2));
