@@ -11,8 +11,9 @@ Two ways to do cross-validation:
 This script runs version (1)
 let R = number of regressors
 betas will be 4R by nVox.
-should i include probe in the testing?
+should i include probe in the testing? can zero out all betas for probes
 compare to regular regression as baseline
+should each probe be individually coded?
 """
 import sys
 # initialize stuff
@@ -28,11 +29,11 @@ else:
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax']
+thisContrast = ['verb']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-alpha = 1000
+alpha = 500
 
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
@@ -63,6 +64,11 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
         ds = ds[idx].copy()
     else:
         des = np.array(betas.sa['regressors']).T
+        ds = ds.copy()
+    regIdx = np.array([i == 'glm_label_probe' for i in betas.sa['regressor_names']])
+    betas = betas[regIdx].copy()
+    des = des[:, regIdx]
+    # zero out betas for probe... or slice des by the those indices.
     # need to only pull the correct betas...
     res = []
     for i in ds.sa[part_attr].unique:
