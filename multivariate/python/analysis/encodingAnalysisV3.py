@@ -29,7 +29,7 @@ else:
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['verb']
+thisContrast = ['syntax']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
@@ -65,7 +65,8 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     else:
         des = np.array(betas.sa['regressors']).T
         ds = ds.copy()
-    regIdx = np.array([i == 'glm_label_probe' for i in betas.sa['regressor_names']])
+    # this only extracts the probes...
+    regIdx = np.array([i != 'glm_label_probe' for i in betas.sa['regressor_names']])
     betas = betas[regIdx].copy()
     des = des[:, regIdx]
     # zero out betas for probe... or slice des by the those indices.
