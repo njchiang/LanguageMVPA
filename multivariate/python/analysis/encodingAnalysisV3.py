@@ -24,12 +24,13 @@ if sys.platform == 'darwin':
     debug = True
 else:
     plat = 'win'
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
     sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
     debug = False
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax']
+thisContrast = ['anim']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
@@ -54,6 +55,13 @@ import os
 from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
+
+
+# def estimatenoise(ds):
+    # rearrange other 3 (original) timeseries to predict the left out one.
+    # can be run on either the betas or on the original timeseries...
+    #
+
 
 # use the betas to predict timeseries for left out chunk
 def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
