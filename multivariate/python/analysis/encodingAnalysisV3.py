@@ -83,10 +83,24 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     for i in ds.sa[part_attr].unique:
         trainidx = ds.sa['chunks'].unique[ds.sa['chunks'].unique != i]
         thesebetas = []
+        thisres = []
         for j in trainidx:
-            thesebetas.append(betas.samples[betas.chunks == j])
-        # estbetas = np.vstack(thesebetas)
-        estbetas = np.mean(np.dstack(thesebetas), axis=-1) # take mean of all betas to predict...
+            # thesebetas.append(betas.samples[betas.chunks == j])
+            thesebetas=betas.samples[betas.chunks == j]
+            estbetas = np.vstack(thesebetas)
+            pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
+                      estbetas)
+            resvar = (ds.samples[ds.chunks == i] - pred).var(0)
+            Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
+            corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+            thisres.append(corrs)
+        res.append(np.mean(np.array(thisres), axis=0))
+        # CONVOLVE WITH HRF! ZOMG...
+        # take mean of all betas to predict... should probably do average of correlations
+        """ average betas
+        for j in trainidx:
+            # thesebetas.append(betas.samples[betas.chunks == j])
+        # estbetas = np.mean(np.dstack(thesebetas), axis=-1)
         pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
                       estbetas)
 
@@ -98,6 +112,7 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
         Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
         corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
         res.append(corrs)
+        """
     from mvpa2.datasets import Dataset
     return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
 
@@ -164,6 +179,14 @@ for sub in subList.keys():
     # refit events and regress...
     # get timing data from timing files
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
+
+    # univariate
+    # import mvpa2.datasets.eventrelated as er
+    #
+    # evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
+    #                               condition_attr=(thisContrast, 'chunks'),
+    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+    #                               return_model=True)
 
     # we can model out motion and just not use those betas.
     # Ridge
