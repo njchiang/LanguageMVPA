@@ -287,6 +287,7 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
     #         ds.sa['glm_label_chunks' + str(i)] = np.array(ds.sa['chunks'].value == i, dtype=np.int)
     return X, ds
 
+
 def make_fulldesignmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
     # for now... loop through this and feed in one event at a time.
     import copy
