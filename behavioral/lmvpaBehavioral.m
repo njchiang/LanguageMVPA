@@ -2,9 +2,10 @@ function [] = lmvpaBehavioral()
 % PTB Script that runs a full experiment testing the LMVPA
 % to do... only probe upper or lower triangle
 %% parameters to adjust
-DEBUG=true;
-textSize=48;
-screenRatio = [0 0 .8 .8]; % offsetX offsetY sizeX sizeY
+DEBUG_MODE=false;
+
+textSize=32;
+screenRatio = [0 0 .5 .5]; % offsetX offsetY sizeX sizeY
 % the total number of sentences
 nTrialTypes = 32;
 % set the indices of sentences to be used
@@ -16,7 +17,11 @@ barSize = [100 20];
 trialSelector = 'upper'; % 'upper', 'lower', or 'all'
 
 %% Part One: Initialization
+if strcmpi(DEBUG_MODE, 'true')
+% Screen('Preference', 'ConserveVRAM', 64);
+Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 1);
+end
 sinit = input('Subject''s initials: ','s');
 outfilename = ['lmvpa_' sinit];
 try
@@ -45,17 +50,19 @@ displayTimeVec = exprnd(displayTimeMean, size(shuffledPairs));
 
 input('Press <enter> to begin');
 fullScreenSize=get(0,'ScreenSize');
+% [win, ScreenSize]=Screen('OpenWindow',0,...
+%     [255 255 255]);
 [win, ScreenSize]=Screen('OpenWindow',0,...
     [255 255 255],fullScreenSize.*screenRatio);
 KbName('UnifyKeyNames');
 Screen('TextFont',win, 'Arial');
 Screen('TextSize',win, textSize);
 
-if (~DEBUG), ListenChar(2); end
+if (~DEBUG_MODE), ListenChar(2); end
 
 %% Part Two: Data Collection
 % for the general condition
-if (~DEBUG), HideCursor; end
+if (~DEBUG_MODE), HideCursor; end
 for blocknumber = 1:nBlocks
     blockLength = size(shuffledPairs,2)/nBlocks;
     theseTrials = shuffledPairs(:, ...
@@ -104,7 +111,7 @@ for blocknumber = 1:nBlocks
 end
 %% Part Three: Cleanup and File save
 ShowCursor
-if (~DEBUG), ListenChar(0); end
+if (~DEBUG_MODE), ListenChar(0); end
 save(outfilename, 'results', 'shuffledPairs', 'seed', 'sinit');
 endExperimText='Thank you for participating. Press <enter> to exit';
 displayText(win, ScreenSize, endExperimText);
