@@ -176,9 +176,10 @@ def amendtimings(ds, b):
             if ev['duration'] is not '0':
                 events.append(ev)
 
-        if i < len(b):
+        if i < len(b)-1:
             idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
-            ds.sa.time_coords[ds.sa['chunks'].value == i+1] += ds.sa.time_coords[idx-1] + TR
+            ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i+1]] \
+                += np.max(ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i]]) + TR
     return ds, events
 #####################################
 # regression stuff
@@ -193,6 +194,35 @@ def events2dict(events):
             raise ValueError("Each event property must be present for all "
                              "events (could not find '%s')" % k)
     return evvars
+
+
+def make_parammat(dm):
+    # assuming dm is a dict
+    import numpy as np
+    out=dm[dm.keys()[0]]
+    pd = []
+    names = []
+    for key in dm.keys():
+        if key == 'anim':
+            # leave anim as binary
+            names.append('inanimate')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
+            names.append('animate')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
+        else:
+        # take the first and last ones out
+            idx = np.arange(len(dm[key].names))
+            idx[0] = 0
+            idx[-1] = 0
+            pd.append(np.dot(dm[key].matrix, idx))
+            names.append(key)
+    pd.append(np.ones(np.shape(pd[-1])))
+    names.append('constant')
+    out.matrix = np.array(pd).T
+    out.names = names
+    return out
+
+
 
 # new make_designmat from scratch
 def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, regr_attrs=None):
