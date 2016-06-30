@@ -131,6 +131,13 @@ for sub in subList.keys():
     map2nifti(thisDS, dataset.vstack([lres, pres])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
                                   '_cvAlpha_ridge.nii.gz'))
+    map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+                                  '_cvAlpha_weights.nii.gz'))
+    map2nifti(thisDS, dataset.vstack([lres, pres])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+                                  '_cvAlpha_alphas.nii.gz'))
+
     del lres, pres
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
@@ -146,3 +153,12 @@ for sub in subList.keys():
     map2nifti(thisDS, cres[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Pridge.nii.gz'))
 
+    map2nifti(thisDS, cwts[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lweights.nii.gz'))
+    map2nifti(thisDS, cwts[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Pweights.nii.gz'))
+
+        map2nifti(thisDS, calphas[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lalphas.nii.gz'))
+    map2nifti(thisDS, calphas[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Palphas.nii.gz'))
