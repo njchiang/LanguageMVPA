@@ -31,6 +31,7 @@ else:
 
 import lmvpautils as lmvpa
 debug = False
+# thisContrast = ['anim', 'verb', 'ap', 'cr']
 thisContrast = ['anim', 'verb', 'ap', 'cr']
 roi = 'grayMatter'
 filterLen = 49
@@ -158,7 +159,7 @@ for sub in subList.keys():
     map2nifti(thisDS, cwts[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Pweights.nii.gz'))
 
-        map2nifti(thisDS, calphas[0]).to_filename(
+    map2nifti(thisDS, calphas[0]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lalphas.nii.gz'))
     map2nifti(thisDS, calphas[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Palphas.nii.gz'))
