@@ -47,6 +47,6 @@ done
 
 fslmerge -t ../${mask}_${model}_Group.nii.gz ../std/std*_${mask}_${model}*nii.gz
 randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} \
-	-v 5 -1 -T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
+	-v 5 -1 -T -x --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
 
 
