@@ -42,8 +42,8 @@ thisContrast = ['anim']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-chunklen=10
-paramEst=.2 #this much data to be held out for testing
+chunklen=10 # this reflects the length of a complete trial
+paramEst=.2 #this much data to be held out for ridge regression parameter estimation
 
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
