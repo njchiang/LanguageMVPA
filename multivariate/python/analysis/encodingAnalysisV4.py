@@ -32,12 +32,18 @@ else:
 import lmvpautils as lmvpa
 debug = False
 # thisContrast = ['anim', 'verb', 'ap', 'cr']
-thisContrast = ['anim', 'verb', 'ap', 'cr']
+thisContrast = ['verb', 'ap', 'cr']
+thisContrast = ['ap', 'cr']
+thisContrast = ['verb']
+thisContrast = ['anim', 'verb']
+thisContrast = ['anim', 'ap', 'cr']
+thisContrast = ['anim']
+
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
 chunklen=10
-nchunks = 2
+paramEst=.2 #this much data to be held out for testing
 
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
@@ -64,6 +70,7 @@ for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
     thisDS = dsdict[sub]
+
     # savitsky golay filtering
     sg.sg_filter(thisDS, filterLen, filterOrd)
     # gallant group zscores before regression.
@@ -109,13 +116,15 @@ for sub in subList.keys():
 
     ldes.matrix = ldes.matrix[lidx]
     pdes.matrix = pdes.matrix[pidx]
+    nchunks = int(len(thisDS)*paramEst / chunklen)
+
     lwts, lalphas, lres = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
-                                              part_attr='chunks', mode='test',
+                                              part_attr='chunks', mode='train',
                                               alphas=None, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     pwts, palphas, pres = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
-                                              part_attr='chunks', mode='test',
+                                              part_attr='chunks', mode='train',
                                               alphas=None, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
@@ -135,7 +144,7 @@ for sub in subList.keys():
     map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
                                   '_cvAlpha_weights.nii.gz'))
-    map2nifti(thisDS, dataset.vstack([lres, pres])) \
+    map2nifti(thisDS, dataset.vstack([lalphas, palphas])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
                                   '_cvAlpha_alphas.nii.gz'))
 
