@@ -7,8 +7,8 @@ DEBUG_MODE=true;
 
 textSize=32;
 screenRatio = [0 0 .5 .5]; % offsetX offsetY sizeX sizeY
-
-% number of blocks... probably need to set this per trial.
+% the total number of sentences
+nTrialTypes = 4;
 nBlocks=1;
 
 % set the indices of sentences to be used
@@ -17,6 +17,8 @@ fixDurMean = 1; % randomly sample from exponential with expectation 1s
 barSize = [100 20];
 trialSelector = 'upper'; % 'upper', 'lower', or 'all'
 
+% probably make other matrices for syntax and semantics
+load('sentences.mat');
 
 %% Part One: Initialization
 % if strcmpi(DEBUG_MODE, 'true')
@@ -26,13 +28,6 @@ Screen('Preference', 'VisualDebugLevel', 1);
 % end
 sinit = input('Subject''s initials: ','s');
 outfilename = ['lmvpa_' sinit];
-
-cond = input('Stimulus list: ', 's');
-% probably make other matrices for syntax and semantics
-load([cond '.mat']);
-% the total number of sentences
-nTrialTypes = length(Sentence);
-
 try
     seed = str2double(input('Subject seed: ', 's'));
 catch
@@ -73,8 +68,7 @@ Screen('TextFont',win, 'Arial');
 Screen('TextSize',win, textSize);
 
 if (~DEBUG_MODE), ListenChar(2); end
-% INSTRUCTIONS GO HERE
-
+displayText(win, ScreenSize, 'Please rate the similarity according to
 %% Part Two: Data Collection
 % for the general condition
 if (~DEBUG_MODE), HideCursor; end
