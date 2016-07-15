@@ -56,7 +56,7 @@ mc_params = lmvpa.loadmotionparams(paths, subList)
 # add everything as a sample attribute
 beta_events = lmvpa.loadevents(paths, subList)
 
-import BootstrapRidgeMapper as bsr
+# import BootstrapRidgeMapper as bsr
 import numpy as np
 import os
 from mvpa2.datasets.mri import map2nifti
