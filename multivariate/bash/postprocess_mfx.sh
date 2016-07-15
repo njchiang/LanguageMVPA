@@ -65,4 +65,4 @@ fslmerge -t ../${mask}_${model}_Group.nii.gz \
 
 randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} \
 	-v 5 -d $desDir/${t}mfx_design.mat -t $desDir/${t}mfx_design.con \
-	-T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
+	-T -x --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
