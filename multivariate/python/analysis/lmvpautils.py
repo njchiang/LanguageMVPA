@@ -209,6 +209,24 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
             names.append('animate')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
+        elif key == 'verb': # isn't right. we need to find something that's continuous...
+            names.append('touch')
+            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])))
+            names.append('light')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0])))
+            names.append('hit')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0, 0, 0])))
+            names.append('crush')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0, 0, 0])))
+            names.append('kiss')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0, 0, 0])))
+            names.append('stretch')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0, 0, 0])))
+            names.append('kick')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 1, 0, 0])))
+            names.append('console')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 1, 0])))
+
         else:
         # take the first and last ones out
             idx = np.arange(len(dm[key].names))
@@ -216,8 +234,9 @@ def make_parammat(dm):
             idx[-1] = 0
             pd.append(np.dot(dm[key].matrix, idx))
             names.append(key)
-    pd.append(np.ones(np.shape(pd[-1])))
-    names.append('constant')
+    # don't need constant because normalized data
+    # pd.append(np.ones(np.shape(pd[-1])))
+    # names.append('constant')
     out.matrix = np.array(pd).T
     out.names = names
     return out
