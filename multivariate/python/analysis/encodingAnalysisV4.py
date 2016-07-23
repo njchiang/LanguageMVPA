@@ -21,6 +21,7 @@ import sys
 if sys.platform == 'darwin':
     plat = 'usb'
     # plat = 'mac'
+    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/analysis')
     sys.path.append('/Users/njchiang/GitHub/python-fmri-utils/utils')
     debug = True
 else:
@@ -31,6 +32,7 @@ else:
 
 import lmvpautils as lmvpa
 debug = True
+thisContrast = ['anim', 'pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
 thisContrast = ['anim', 'verb', 'ap', 'cr']
 # thisContrast = ['verb', 'ap', 'cr']
 # thisContrast = ['ap', 'cr']

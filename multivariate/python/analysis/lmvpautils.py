@@ -8,14 +8,16 @@ def initpaths(platform):
     p = []
     if 'win' in platform:
         p.append("D:\\fmri\\LanguageMVPA")
-        p.append("D:\GitHub\LanguageMVPA\multivariate\python")
+        p.append("D:\\GitHub\\LanguageMVPA\\multivariate\\python")
+        p.append("D:\\CloudStation\\Grad\\Research\\LanguageMVPA")
     elif 'mac' in platform:
         p.append("/Volumes/fmri/LanguageMVPA")
         p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
+        p.append('Users/njchiang/CloudStation/Grad/Research/LanguageMVPA')
     elif 'usb' in platform:
         p.append("/Volumes/JEFF/UCLA/LMVPA/")
         p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
-
+        p.append('Users/njchiang/CloudStation/Grad/Research/LanguageMVPA')
     p.append(os.path.join(p[1], "labels"))
     p.append(os.path.join(p[0], "Maps", "PyMVPA"))
     # c = ["stim", "verb", "anim", "AP", "CR", "syntax"]
@@ -25,6 +27,15 @@ def initpaths(platform):
     for i, name in enumerate(tmpc[0, :]):
         c[name] = tmpc[1:, i]
 
+    manualTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsManual.txt'), dtype=str),
+                              np.repeat('0', 44), np.repeat('rest', 44)))
+    for i in np.arange(manualTopics.shape[1]):
+        c['manualTopic' + str(i)] = manualTopics[:,i]
+
+    pcaTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsPCA.txt'), dtype=str),
+                           np.repeat('0', 6), np.repeat('rest', 6)))
+    for i in np.arange(pcaTopics.shape[1]):
+        c['pcaTopic' + str(i)] = pcaTopics[:, i]
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
     s = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
