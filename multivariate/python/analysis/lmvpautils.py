@@ -224,7 +224,7 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0])))
         elif key == 'verb': # isn't right. we need to find something that's continuous...
             names.append('touch')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0])))
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))) # can multiply this with the feature vector...
             names.append('light')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])))
             names.append('hit')
