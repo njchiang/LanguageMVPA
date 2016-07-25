@@ -65,7 +65,7 @@ from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import BootstrapRidge as bsr
 import copy as cp
-alphas = np.logspace(0, 3, 20)
+alphas = np.logspace(0, 2, 20)
 
 
 for sub in subList.keys():
@@ -88,7 +88,8 @@ for sub in subList.keys():
 
     # refit events and regress...
     # get timing data from timing files
-    rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
+    # rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
+    rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub], contrasts) # adding features
 
     # univariate
     # import mvpa2.datasets.eventrelated as er

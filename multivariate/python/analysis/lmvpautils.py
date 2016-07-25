@@ -167,7 +167,8 @@ def loadmotionparams(p, s):
     return res
 
 
-def amendtimings(ds, b):
+def amendtimings(ds, b, extras=None):
+    # have this add all of the extra stuff
     from mvpa2.datasets import eventrelated as er
     import numpy as np
     TR = np.median(np.diff(ds.sa.time_coords))
@@ -185,7 +186,19 @@ def amendtimings(ds, b):
             else:
                 ev['amplitude'] = 1
             if ev['duration'] is not '0':
+                # add extra regressors
+                if extras is not None:
+                    for k in extras.keys():
+                        if 'manualTopic' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                        # add manualTopics
+                        if 'pcaTopic' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                    # add PC topics
+
                 events.append(ev)
+
+
 
         if i < len(b)-1:
             idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
