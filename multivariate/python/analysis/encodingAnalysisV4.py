@@ -32,8 +32,8 @@ else:
 
 import lmvpautils as lmvpa
 debug = True
-thisContrast = ['anim', 'pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
-thisContrast = ['anim', 'verb', 'ap', 'cr']
+thisContrast = ['pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
+# thisContrast = ['anim', 'verb', 'ap', 'cr']
 # thisContrast = ['verb', 'ap', 'cr']
 # thisContrast = ['ap', 'cr']
 # thisContrast = ['verb']
@@ -130,7 +130,7 @@ for sub in subList.keys():
                                               use_corr=True)
     pwts, palphas, pres = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
-                                              alphas=None, single_alpha=False, normalpha=False,
+                                              alphas=alphas, single_alpha=False, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
@@ -159,7 +159,7 @@ for sub in subList.keys():
     crossSet.chunks[pidx] = 2
     cwts, calphas, cres = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=2*nchunks,
                                               part_attr='chunks', mode='test',
-                                              alphas=None, single_alpha=False, normalpha=False,
+                                              alphas=alphas, single_alpha=False, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     print 'cross: ' + str(np.mean(cres))
