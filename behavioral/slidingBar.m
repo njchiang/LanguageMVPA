@@ -21,7 +21,7 @@ FlushEvents('keyDown');
 
 % Wait for a click and hide the cursor
 % Screen('DrawText',window,'Drag mouse (i.e. hold button down) to respond',xstart-400,ypos-500,[200 200 200]);
-Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
+% Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
 Screen('Flip',window);
 
 while (1)
@@ -50,13 +50,13 @@ while (1)
         
         squarerangersp=[xstart-squaresize(1) ypos-squaresize(2) theX ypos+squaresize(2)];
         Screen('FillRect',window,[0 0 0], squarerange);
-        Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[0 0 0]);%
+%         Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[0 0 0]);%
         Screen('FrameRect',window,[200 200 200], squarerange,[3]);
         Screen('FillRect',window,[200 200 200], squarerangersp);
         theX = x; theY = y;
         
         rating = (theX-(xstart-squaresize(1)))/2/squaresize(1);
-        Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
+%         Screen('DrawText',window,[sprintf('%d',round(rating*100)) '%'],xstart-30, ypos+80,[200 200 200]);%
         
         %%%%%%%%%%%%%%%%%%%
         Screen('Flip',window); % deletes the rest of the screen
