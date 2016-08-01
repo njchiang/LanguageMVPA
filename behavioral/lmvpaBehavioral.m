@@ -14,9 +14,10 @@ nBlocks=1;
 % set the indices of sentences to be used
 displayTimeMean=2; % randomly sample from exponential with expectation 2s
 fixDurMean = 1; % randomly sample from exponential with expectation 1s
-barSize = [100 20];
+barSize = [300 30];
 trialSelector = 'upper'; % 'upper', 'lower', or 'all'
-
+sentenceDisplayRange=[1.5 3];
+fixDisplayRange=[.5 1.5];
 
 %% Part One: Initialization
 % if strcmpi(DEBUG_MODE, 'true')
@@ -55,17 +56,18 @@ end
 shuffledPairs = shuffledPairs(:, triangleSelector);
 
 fixDurVec =  exprnd(fixDurMean, size(shuffledPairs));
-fixDurVec(fixDurVec < 1.5) = 1.5;
-fixDurVec(fixDurVec > 2.5) = 2.5;
+fixDurVec(fixDurVec < fixDisplayRange(1)) = fixDisplayRange(1);
+fixDurVec(fixDurVec > fixDisplayRange(2)) = fixDisplayRange(2);
 displayTimeVec = exprnd(displayTimeMean, size(shuffledPairs));
-displayTimeVec(displayTimeVec < .5) = .5;
-displayTimeVec(displayTimeVec > 1.5) = 1.5;
+displayTimeVec(displayTimeVec < sentenceDisplayRange(1)) = sentenceDisplayRange(1);
+displayTimeVec(displayTimeVec > sentenceDisplayRange(2)) = sentenceDisplayRange(2);
 
 
 input('Press <enter> to begin');
 fullScreenSize=get(0,'ScreenSize');
 [win, ScreenSize]=Screen('OpenWindow',0,...
     [255 255 255]);
+HideCursor(0);
 % [win, ScreenSize]=Screen('OpenWindow',0,...
 %     [255 255 255],fullScreenSize.*screenRatio);
 KbName('UnifyKeyNames');
