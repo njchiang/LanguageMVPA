@@ -478,23 +478,6 @@ def makebinarymodel(l):
     return 1-m
 
 
-def initrsa(c_all, p):
-    import numpy as np
-    from mvpa2.misc.io.base import SampleAttributes
-    import os
-    a = np.array([SampleAttributes(os.path.join(p[4], (c + "_attribute_labels.txt"))).targets for c in c_all],
-                 dtype=np.int64)
-    m = np.zeros([a.shape[1], a.shape[1]])
-    for i in np.arange(a.shape[0]):
-        m += makebinarymodel(a[i, ])
-    from mvpa2.base.learner import ChainLearner
-    from mvpa2.mappers.shape import TransposeMapper
-    from mvpa2.measures import rsa
-    tdsm = rsa.PDistTargetSimilarity(rsa.squareform(m))
-    return ChainLearner([tdsm, TransposeMapper()])
-######################################
-# quality control:
-
 
 def testsg(ds, w, p, voxIdx, c='chunks'):
     import matplotlib.pyplot as plt

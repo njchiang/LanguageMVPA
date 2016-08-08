@@ -6,20 +6,27 @@
 """V3.0: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
 runs a beta extraction for each trial, subs in the corresponding labels and classifies."""
 # try doing whole brain classification with heavy feature selection
-import sys
 import numpy as np
 # initialize stuff
+import sys
+# initialize stuff
 if sys.platform == 'darwin':
-    plat = 'mac'
-    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
-    debug=True
+    plat = 'usb'
+    # plat = 'mac'
+    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/analysis')
+    sys.path.append('/Users/njchiang/GitHub/python-fmri-utils/utils')
+    debug = True
 else:
     plat = 'win'
-    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
-    debug=False
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
+    sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
+    debug = False
+
 import lmvpautils as lmvpa
 from string import Template
 # plat = 'usb'
+debug=True
+
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 thisContrast = 'verb'
 chance = .125
@@ -29,7 +36,7 @@ nComp = 10  # number of SVD components
 filterLen = 49  #for SG filter
 filterOrd = 3  # for sg filter
 if debug:
-    subList = {'LMVPA005': subList['LMVPA005']}
+    subList = {'LMVPA003': subList['LMVPA003']}
 # this would load all data at once. not memory efficient
 # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
@@ -83,11 +90,14 @@ fclf = FeatureSelectionClassifier(clf, sbfs)
 cv = CrossValidation(fclf,
                      NFoldPartitioner(attr='chunks'),
                      errorfx=errorfx.mean_match_accuracy)
+from mvpa2.measures import rsa
+dsm = rsa.PDist(square=True)
 
 lresults = []
 presults = []
 l2presults=[]
 p2lresults=[]
+rsaresults = []
 labels = []
 for sub in subList.keys():
     thisSub = {sub: subList[sub]}
@@ -120,6 +130,8 @@ for sub in subList.keys():
     fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
     fds = fds[fds.targets != '0']
     fds = fds[fds.targets != 'rest']
+    rsaresults.append(dsm(fds))
+
     lidx = fds.chunks < fds.sa['chunks'].unique[len(fds.sa['chunks'].unique)/2]
     pidx = fds.chunks >= fds.sa['chunks'].unique[len(fds.sa['chunks'].unique) / 2]
 
@@ -139,7 +151,6 @@ for sub in subList.keys():
     fclf.untrain()
     fclf.train(fds[pidx])
     p2lresults.append(np.mean(fclf.predict(fds[lidx]) == fds[lidx].sa.targets))
-
 
 def plotsubs(lr, pr, l2p, p2l, c=None, title=None, bar_width=.2, opacity=.4, error_config={'ecolor': '0.3'}):
     import matplotlib.pyplot as plt
@@ -212,3 +223,7 @@ def plotsubs(lr, pr, l2p, p2l, c=None, title=None, bar_width=.2, opacity=.4, err
 desc = Template('$con: SG filter($fl, $fo) Classifier($c) Preproc($p) Mask($m) Betas($b)')
 title = desc.substitute(con=thisContrast, fl=str(filterLen), fo=str(filterOrd), c=cname, p=preproc, m=roi, b=betas)
 plotsubs(lresults, presults, l2presults, p2lresults, c=chance, title=title)
+
+
+import rsautils as ru
+ru.plot_mtx(ru.rankTransform(np.mean(np.dstack(rsaresults), axis=2)), fds.sa.targets, 'ROI pattern correlation distances')
