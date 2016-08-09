@@ -3,13 +3,14 @@ function [] = lmvpaBehavioral()
 % to do... only probe upper or lower triangle
 % maybe we want to incrementally save after each block...
 %% parameters to adjust
-DEBUG_MODE=true;
+DEBUG_MODE=false; % true for half screen)
+% number of blocks... probably need to set this per trial.
+nBlocks=2;
 
 textSize=32;
 screenRatio = [0 0 .5 .5]; % offsetX offsetY sizeX sizeY
 
-% number of blocks... probably need to set this per trial.
-nBlocks=1;
+
 
 % set the indices of sentences to be used
 displayTimeMean=2; % randomly sample from exponential with expectation 2s
@@ -26,13 +27,13 @@ Screen('Preference', 'SkipSyncTests', 1);
 Screen('Preference', 'VisualDebugLevel', 1);
 % end
 sinit = input('Subject''s initials: ','s');
-outfilename = ['lmvpa_' sinit];
 
 cond = input('Stimulus list: ', 's');
 % probably make other matrices for syntax and semantics
 load([cond '.mat']);
 % the total number of sentences
 nTrialTypes = length(Sentence);
+outfilename = ['lmvpa_' cond '_' sinit];
 
 try
     seed = str2double(input('Subject seed: ', 's'));
@@ -65,11 +66,15 @@ displayTimeVec(displayTimeVec > sentenceDisplayRange(2)) = sentenceDisplayRange(
 
 input('Press <enter> to begin');
 fullScreenSize=get(0,'ScreenSize');
-[win, ScreenSize]=Screen('OpenWindow',0,...
-    [255 255 255]);
 HideCursor(0);
-% [win, ScreenSize]=Screen('OpenWindow',0,...
-%     [255 255 255],fullScreenSize.*screenRatio);
+if DEBUG_MODE
+    
+    [win, ScreenSize]=Screen('OpenWindow',0,...
+        [255 255 255],fullScreenSize.*screenRatio);
+else
+    [win, ScreenSize]=Screen('OpenWindow',0,...
+        [255 255 255]);
+end
 KbName('UnifyKeyNames');
 Screen('TextFont',win, 'Arial');
 Screen('TextSize',win, textSize);
@@ -90,6 +95,7 @@ for blocknumber = 1:nBlocks
         blockLength*(blocknumber-1) + [1:blockLength]);
     for trialnumber = 1:size(theseTrials, 2)
         % displaytime=Shuffle(displaytime);
+        HideCursor(0);
         trialStartTime = Screen('Flip', win);
         
         %%%%%%%%%%% each trial %%%%%%%%%%%%%%
@@ -125,8 +131,14 @@ for blocknumber = 1:nBlocks
     save(outfilename, 'results', 'shuffledPairs', 'seed', 'sinit');
     % press a button to advance
     % probably should use Kb...
-    input('Press <enter>');
-    
+    %     input('Press <enter>');
+    cResponse = 0;
+    while (cResponse == 0)
+        [keyDown, ~, ~] = KbCheck(-1);
+        if(keyDown)
+            cResponse = 1;
+        end
+    end
 end
 %% Part Three: Cleanup and File save
 ShowCursor
@@ -135,7 +147,15 @@ save(outfilename, 'results', 'shuffledPairs', 'seed', 'sinit');
 endExperimText='Thank you for participating. Press <enter> to exit';
 displayText(win, ScreenSize, endExperimText);
 % use kb here
-input('Press <enter>');
+% input('Press <enter>');
+
+cResponse = 0;
+while (cResponse == 0)
+    [keyDown, ~, ~] = KbCheck(-1);
+    if(keyDown)
+        cResponse = 1;
+    end
+end
 sca;
 
 end
