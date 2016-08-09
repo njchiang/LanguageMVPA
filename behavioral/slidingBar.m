@@ -70,3 +70,4 @@ while (1)
 end;
 
 HideCursor(0);
+
