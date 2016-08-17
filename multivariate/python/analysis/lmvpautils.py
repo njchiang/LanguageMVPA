@@ -252,7 +252,14 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0])))
             names.append('console')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0])))
-
+        elif key == 'stim':
+            # leave anim as binary
+            names.append('lang')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
+            names.append('pic')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
+            names.append('probe')
+            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0])))
         else:
         # take the first and last ones out
             idx = np.arange(len(dm[key].names))

@@ -32,23 +32,24 @@ else:
 
 import lmvpautils as lmvpa
 debug = True
-thisContrast = ['pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
+# thisContrast = ['pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
 # thisContrast = ['anim', 'verb', 'ap', 'cr']
-# thisContrast = ['verb', 'ap', 'cr']
+thisContrast = ['verb', 'ap', 'cr']
 # thisContrast = ['ap', 'cr']
 # thisContrast = ['verb']
 # thisContrast = ['anim', 'verb']
 # thisContrast = ['anim', 'ap', 'cr']
 # thisContrast = ['anim']
+# thisContrast = ['stim']
 
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-chunklen=10 # this reflects the length of a complete trial
+chunklen=50 # this reflects the length of a complete trial
 paramEst=.2 #this much data to be held out for ridge regression parameter estimation
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
-    subList = {'LMVPA005': subList['LMVPA005']}
+    subList = {'LMVPA003': subList['LMVPA003']}
 
 # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
 # motion parameters for all subjects
@@ -65,7 +66,7 @@ from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import BootstrapRidge as bsr
 import copy as cp
-alphas = np.logspace(0, 2, 20)
+alphas = np.logspace(0, 3, 20)
 
 
 for sub in subList.keys():
@@ -125,12 +126,12 @@ for sub in subList.keys():
     mus = None
     lwts, lalphas, lres = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
                                               cov0=covarmat, mu0=mus, part_attr='chunks', mode='test',
-                                              alphas=alphas, single_alpha=False, normalpha=False,
+                                              alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     pwts, palphas, pres = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
-                                              alphas=alphas, single_alpha=False, normalpha=False,
+                                              alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
@@ -157,9 +158,9 @@ for sub in subList.keys():
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
-    cwts, calphas, cres = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=2*nchunks,
+    cwts, calphas, cres = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
-                                              alphas=alphas, single_alpha=False, normalpha=False,
+                                              alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     print 'cross: ' + str(np.mean(cres))
@@ -177,3 +178,20 @@ for sub in subList.keys():
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2Lalphas.nii.gz'))
     map2nifti(thisDS, calphas[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2Palphas.nii.gz'))
+
+# for stim
+#
+#     cwts, calphas, cres = bsr.bootstrap_ridge(rds, des, chunklen=chunklen, nchunks=2 * nchunks,
+#                                               part_attr='chunks', mode='test',
+#                                               alphas=alphas, single_alpha=True, normalpha=False,
+#                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
+#                                               use_corr=True)
+#     map2nifti(thisDS, cres) \
+#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+#                                   '_cvAlpha_ridge.nii.gz'))
+#     map2nifti(thisDS, cwts) \
+#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+#                                   '_cvAlpha_weights.nii.gz'))
+#     map2nifti(thisDS, calphas) \
+#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+#                                   '_cvAlpha_alphas.nii.gz'))
