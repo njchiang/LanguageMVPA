@@ -34,8 +34,8 @@ import lmvpautils as lmvpa
 debug = True
 # thisContrast = ['pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
 # thisContrast = ['anim', 'verb', 'ap', 'cr']
-thisContrast = ['verb', 'ap', 'cr']
-# thisContrast = ['ap', 'cr']
+# thisContrast = ['verb', 'ap', 'cr']
+thisContrast = ['ap', 'cr']
 # thisContrast = ['verb']
 # thisContrast = ['anim', 'verb']
 # thisContrast = ['anim', 'ap', 'cr']
@@ -45,7 +45,7 @@ thisContrast = ['verb', 'ap', 'cr']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-chunklen=50 # this reflects the length of a complete trial
+chunklen = 12 # this reflects the length of a complete trial
 paramEst=.2 #this much data to be held out for ridge regression parameter estimation
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
@@ -66,7 +66,10 @@ from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import BootstrapRidge as bsr
 import copy as cp
-alphas = np.logspace(0, 3, 20)
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+alphas = np.logspace(-1, 1, 20)
 
 
 for sub in subList.keys():
