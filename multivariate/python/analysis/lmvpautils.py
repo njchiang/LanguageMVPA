@@ -27,15 +27,26 @@ def initpaths(platform):
     for i, name in enumerate(tmpc[0, :]):
         c[name] = tmpc[1:, i]
 
-    manualTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsManual.txt'), dtype=str),
-                              np.repeat('0', 44), np.repeat('rest', 44)))
-    for i in np.arange(manualTopics.shape[1]):
-        c['manualTopic' + str(i)] = manualTopics[:,i]
+    # manualTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsManual.txt'), dtype=str),
+    #                           np.repeat('0', 44), np.repeat('rest', 44)))
+    # for i in np.arange(manualTopics.shape[1]):
+    #     c['manualTopic' + str(i)] = manualTopics[:,i]
+    #
+    # pcaTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsPCA.txt'), dtype=str),
+    #                        np.repeat('0', 6), np.repeat('rest', 6)))
+    # for i in np.arange(pcaTopics.shape[1]):
+    #     c['pcaTopic' + str(i)] = pcaTopics[:, i]
 
-    pcaTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsPCA.txt'), dtype=str),
-                           np.repeat('0', 6), np.repeat('rest', 6)))
-    for i in np.arange(pcaTopics.shape[1]):
-        c['pcaTopic' + str(i)] = pcaTopics[:, i]
+    w2vSub = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecSubs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+    w2vVerb = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecVerbs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+    w2vObj = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecObjs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+
+    w2vFeatures = w2vVerb
+    for i in np.arange(w2vFeatures.shape[1]):
+        c['word2vec' + str(i)] = w2vFeatures[:, i]
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
     s = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
@@ -194,8 +205,9 @@ def amendtimings(ds, b, extras=None):
                         # add manualTopics
                         if 'pcaTopic' in k:
                             ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                        if 'word2vec' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
                     # add PC topics
-
                 events.append(ev)
 
 
@@ -233,8 +245,7 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
             names.append('animate')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
-            names.append('probe')
-            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0])))
+
         elif key == 'verb': # isn't right. we need to find something that's continuous...
             names.append('touch')
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))) # can multiply this with the feature vector...
@@ -258,8 +269,6 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
             names.append('pic')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
-            names.append('probe')
-            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0])))
         else:
         # take the first and last ones out
             idx = np.arange(len(dm[key].names))
@@ -270,6 +279,7 @@ def make_parammat(dm):
     # don't need constant because normalized data
     # pd.append(np.ones(np.shape(pd[-1])))
     # names.append('constant')
+
     out.matrix = np.array(pd).T
     out.names = names
     return out
