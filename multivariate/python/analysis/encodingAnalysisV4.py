@@ -1,21 +1,18 @@
 #!/usr/bin/env python
 # emacs: -*- mode: python; py-indent-offset: 4; indent-tabs-mode: nil -*-
 # vi: set ft=python sts=4 ts=4 sw=4 et:
-# this script represents just throwing pymvpa at the problem. doesn't work great, and I suspect it's
-# because we're using an encoding model.
 """
-Current version of encoding analysis: takes timing files for betas and makes design matrix out of them.
-Two ways to do cross-validation:
-    1) run same regressors on each chunk
-    2) run everything at once, but have a separate set of regressors per chunk and index them accordingly.
-This script runs version (1)
-let R = number of regressors
-# bootstrapping works. now need to fix design matrix
-betas will be 4R by nVox.
-should i include probe in the testing? can zero out all betas for probes
-compare to regular regression as baseline
-should each probe be individually coded? yes.
+Current working version of encoding analysis with L2 regularization (when no prior structure is given, this is simply ridge regression.
+call from command line to flexibly change the mask and feature space. This way the file doesn't have to be continually modified.
 """
+import os
+from mvpa2.datasets.mri import map2nifti
+from mvpa2.mappers.zscore import zscore
+import copy as cp
+import numpy as np
+import logging
+import getopt
+
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -31,58 +28,18 @@ else:
     debug = False
 
 import lmvpautils as lmvpa
-import numpy as np
-
-debug = False
-
-thisContrast = ['probe', 'ap', 'cr']
-thisContrastStr = '+'.join(thisContrast)
-
-
-thisContrastStr = thisContrastStr + '+word2vec'
-for i in np.arange(0, 300):
-    thisContrast.append('word2vec'+str(i))
-
-# thisContrast = ['pcaTopic0', 'pcaTopic1', 'pcaTopic2', 'pcaTopic3', 'pcaTopic4', 'pcaTopic5', 'ap', 'cr']
-# thisContrast = ['anim', 'verb', 'ap', 'cr']
-# thisContrast = ['verb', 'ap', 'cr']
-# thisContrast = ['ap', 'cr']
-# thisContrast = ['verb']
-# thisContrast = ['anim', 'verb']
-# thisContrast = ['anim', 'ap', 'cr']
-# thisContrast = ['anim']
-# thisContrast = ['stim']
-
-roi = 'grayMatter'
-filterLen = 49
-filterOrd = 2
-chunklen = 12 # this reflects the length of a complete trial
-paramEst=.2 #this much data to be held out for ridge regression parameter estimation
-paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-if debug:
-    subList = {'LMVPA005': subList['LMVPA005']}
-
-# ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
-# motion parameters for all subjects
-mc_params = lmvpa.loadmotionparams(paths, subList)
-# events for beta extraction
-# add everything as a sample attribute
-beta_events = lmvpa.loadevents(paths, subList)
-
-import os
-from mvpa2.datasets.mri import map2nifti
-from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import BootstrapRidge as bsr
-import copy as cp
-import logging
 
-logging.basicConfig(level=logging.DEBUG)
-alphas = np.logspace(-3, 3, 50)
+paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 
-for sub in subList.keys():
+def runsub(sub, thisContrast, thisContrastStr,
+           filterLen, filterOrd,
+           paramEst, chunklen, alphas=np.logspace(0, 3, 20), roi='grayMatter'):
     thisSub = {sub: subList[sub]}
+    mc_params = lmvpa.loadmotionparams(paths, thisSub)
+    beta_events = lmvpa.loadevents(paths, thisSub)
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
     thisDS = dsdict[sub]
 
@@ -182,19 +139,56 @@ for sub in subList.keys():
 
     del cres, cwts, calphas
 
-# for stim
-#
-#     cwts, calphas, cres = bsr.bootstrap_ridge(rds, des, chunklen=chunklen, nchunks=2 * nchunks,
-#                                               part_attr='chunks', mode='test',
-#                                               alphas=alphas, single_alpha=True, normalpha=False,
-#                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
-#                                               use_corr=True)
-#     map2nifti(thisDS, cres) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_ridge.nii.gz'))
-#     map2nifti(thisDS, cwts) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_weights.nii.gz'))
-#     map2nifti(thisDS, calphas) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_alphas.nii.gz'))
+
+def main(argv):
+    roi = 'grayMatter'
+    thisContrast = []
+
+    paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
+
+    try:
+      opts, args = getopt.getopt(argv, "hm:c:", ["mfile=", "contrast="])
+    except getopt.GetoptError:
+      print 'encodingAnalysisV4.py -r <roi> -m <maskfile> -c <contrast> '
+      sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'encodingAnalysisV4.py -m <mask> -c <contrast> '
+            sys.exit()
+        elif opt in ("-m", "--mask"):
+            roi = arg
+        elif opt in ("-c", "--contrast"):
+            thisContrast = arg.split(',')
+
+    debug=False
+    if not thisContrast:
+        print "not a valid contrast... exiting"
+        sys.exit(1)
+
+    thisContrastStr = '+'.join(thisContrast)
+    print(thisContrastStr)
+    if 'word2vec' in thisContrast:
+        thisContrast.remove('word2vec')
+        for i in np.arange(0, 300):
+            thisContrast.append('word2vec' + str(i))
+
+    sg_params = [49, 2]
+    chunklen = 12  # this reflects the length of a complete trial
+    paramEst = .2  # this much data to be held out for ridge regression parameter estimation
+    if debug:
+        subList = {'LMVPA005': subList['LMVPA005']}
+
+    # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
+    # motion parameters for all subjects
+    # events for beta extraction
+    # add everything as a sample attribute
+
+    logging.basicConfig(level=logging.DEBUG)
+    alphas = np.logspace(-3, 3, 50)
+    for s in subList.keys():
+        runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
+               filterLen=sg_params[0], filterOrd=sg_params[1],
+               paramEst=paramEst, chunklen=chunklen, alphas=alphas, roi='grayMatter')
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

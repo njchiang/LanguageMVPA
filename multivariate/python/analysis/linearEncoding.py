@@ -5,7 +5,17 @@
 # because we're using an encoding model.
 """
 Linear regression encoding model (for basic features)
+call from command line to flexibly change the mask and feature space. This way the file doesn't have to be continually modified.
+
 """
+import os
+from mvpa2.datasets.mri import map2nifti
+from mvpa2.mappers.zscore import zscore
+import copy as cp
+import numpy as np
+import logging
+import getopt
+
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -21,43 +31,16 @@ else:
     debug = False
 
 import lmvpautils as lmvpa
-debug = False
-# thisContrast = ['probe', 'word2vec0']
-# thisContrast = ['anim', 'verb', 'ap', 'cr']
-# thisContrast = ['verb', 'ap', 'cr', 'probe']
-# thisContrast = ['ap', 'cr', 'probe']
-thisContrast = ['verb', 'probe']
-# thisContrast = ['anim', 'verb']
-# thisContrast = ['anim', 'ap', 'cr']
-# thisContrast = ['anim']
-# thisContrast = ['stim']
-
-roi = 'grayMatter'
-filterLen = 49
-filterOrd = 2
-
-paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-if debug:
-    subList = {'LMVPA003': subList['LMVPA003']}
-
-# ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
-# motion parameters for all subjects
-mc_params = lmvpa.loadmotionparams(paths, subList)
-# events for beta extraction
-# add everything as a sample attribute
-beta_events = lmvpa.loadevents(paths, subList)
-
-# import BootstrapRidgeMapper as bsr
-import numpy as np
-import os
-from mvpa2.datasets.mri import map2nifti
-from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 import BootstrapRidge as bsr
-import copy as cp
 
-for sub in subList.keys():
+paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
+
+
+def runsub(sub, thisContrast, filterLen, filterOrd, thisContrastStr, roi='grayMatter'):
     thisSub = {sub: subList[sub]}
+    mc_params = lmvpa.loadmotionparams(paths, thisSub)
+    beta_events = lmvpa.loadevents(paths, thisSub)
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
     thisDS = dsdict[sub]
 
@@ -108,10 +91,10 @@ for sub in subList.keys():
     print 'pictures: ' + str(np.mean(pres))
     from mvpa2.base import dataset
     map2nifti(thisDS, dataset.vstack([lres, pres])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
                                   '_univar_corr.nii.gz'))
     map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
                                   '_univar_betas.nii.gz'))
 
     del lres, pres
@@ -122,28 +105,61 @@ for sub in subList.keys():
     print 'cross: ' + str(np.mean(cres))
 
     map2nifti(thisDS, cres[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2L_univar.nii.gz'))
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_univar.nii.gz'))
     map2nifti(thisDS, cres[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2P_univar.nii.gz'))
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_univar.nii.gz'))
 
     map2nifti(thisDS, cwts[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_P2L_betas.nii.gz'))
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_betas.nii.gz'))
     map2nifti(thisDS, cwts[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) + '_L2P_betas.nii.gz'))
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_betas.nii.gz'))
 
-# for stim
-#
-#     cwts, calphas, cres = bsr.bootstrap_ridge(rds, des, chunklen=chunklen, nchunks=2 * nchunks,
-#                                               part_attr='chunks', mode='test',
-#                                               alphas=alphas, single_alpha=True, normalpha=False,
-#                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
-#                                               use_corr=True)
-#     map2nifti(thisDS, cres) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_ridge.nii.gz'))
-#     map2nifti(thisDS, cwts) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_weights.nii.gz'))
-#     map2nifti(thisDS, calphas) \
-#         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + '+'.join(thisContrast) +
-#                                   '_cvAlpha_alphas.nii.gz'))
+
+def main(argv):
+    roi = 'grayMatter'
+    thisContrast = []
+
+    paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
+
+    try:
+      opts, args = getopt.getopt(argv, "hm:c:", ["mfile=", "contrast="])
+    except getopt.GetoptError:
+      print 'linearEncoding.py -r <roi> -m <maskfile> -c <contrast> '
+      sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'linearEncoding.py -m <mask> -c <contrast> '
+            sys.exit()
+        elif opt in ("-m", "--mask"):
+            roi = arg
+        elif opt in ("-c", "--contrast"):
+            thisContrast = arg.split(',')
+
+    debug=False
+    if not thisContrast:
+        print "not a valid contrast... exiting"
+        sys.exit(1)
+
+    thisContrastStr = '+'.join(thisContrast)
+    print(thisContrastStr)
+    if 'word2vec' in thisContrast:
+        thisContrast.remove('word2vec')
+        for i in np.arange(0, 300):
+            thisContrast.append('word2vec' + str(i))
+
+    sg_params = [49, 2]
+    if debug:
+        subList = {'LMVPA005': subList['LMVPA005']}
+
+    # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
+    # motion parameters for all subjects
+    # events for beta extraction
+    # add everything as a sample attribute
+
+    logging.basicConfig(level=logging.DEBUG)
+    for s in subList.keys():
+        runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
+               filterLen=sg_params[0], filterOrd=sg_params[1], roi='grayMatter')
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
