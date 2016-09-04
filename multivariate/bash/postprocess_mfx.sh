@@ -33,6 +33,10 @@ case $key in
     MASK="$2"
     shift # past argument
     ;;
+	-c|--chance)
+    CHANCE="$2"
+    shift # past argument
+    ;;
     *)
             # unknown option
     ;;
@@ -40,16 +44,16 @@ esac
 shift # past argument or value
 done
 
-# check platform
-platform='unknown'
+# check PLATFORM
+PLATFORM='unknown'
 if [[ "$OSTYPE" == "linux-gnu" ]]; then
-   platform='linux'
-   rootdir=/mnt/d
-   homedir=$rootdir
+   PLATFORM='linux'
+   ROOTDIR=/mnt/d
+   HOMEDIR=$ROOTDIR
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-   platform='mac'
-   rootdir=/Volumes/fmri
-   homedir=/Users/njchiang
+   PLATFORM='mac'
+   ROOTDIR=/Volumes/fmri
+   HOMEDIR=/Users/njchiang
 fi
 
 echo "PLATFORM  = ${PLATFORM}" 
@@ -60,24 +64,24 @@ echo "MODEL     = ${MODEL}"
 echo "MASK    = ${MASK}"
 echo "CHANCE    = ${CHANCE}"
 
-projectDir=${rootdir}/fmri/LanguageMVPA
-desDir=${homedir}/GitHub/LanguageMVPA/multivariate/bash
+projectDir=${ROOTDIR}/fmri/LanguageMVPA
+desDir=${HOMEDIR}/GitHub/LanguageMVPA/multivariate/bash
 refImage=${projectDir}/MNI152_T1_3mm_brain.nii.gz
 refMask=${projectDir}/fnirt/MNI152_T1_3mm_brain_mask.nii.gz
-targetDir=${projectDir}/${1}
+targetDir=${projectDir}/${RESPATH}
 
 cd ${targetDir}
 
-if [ ! -f ${mask}_${model}_Group.nii.gz ]
+if [ ! -f ${MASK}_${MODEL}_Group.nii.gz ]
 then
 	echo "Moving files"
 	#move raw outputs
 	mkdir raw
 	mkdir std
-	mv *_${mask}_${model}.nii.gz raw
+	mv *_${MASK}_${MODEL}.nii.gz raw
 	cd raw
 	pwd
-	for indMap in `ls | grep _${mask}_${model}.nii.gz`
+	for indMap in `ls | grep _${MASK}_${MODEL}.nii.gz`
 	do
 		sub=`echo ${indMap} | cut -d '_' -f1`
 		echo ${sub}
@@ -87,7 +91,7 @@ then
 		then
 			cp ${indMap} rnd_${indMap}
 		else
-			fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
+			fslmaths tmp.nii.gz -mul ${CHANCE} tmp.nii.gz
 			fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
 		fi
 
@@ -99,28 +103,28 @@ then
 		rm rnd_${indMap} tmp.nii.gz
 	done
 
-	fslmerge -t ../${mask}_${model}_Group.nii.gz \
-	../std/std_LMVPA001_${mask}_${model}.nii.gz \
-	../std/std_LMVPA002_${mask}_${model}.nii.gz \
-	../std/std_LMVPA003_${mask}_${model}.nii.gz \
-	../std/std_LMVPA005_${mask}_${model}.nii.gz \
-	../std/std_LMVPA006_${mask}_${model}.nii.gz \
-	../std/std_LMVPA007_${mask}_${model}.nii.gz \
-	../std/std_LMVPA008_${mask}_${model}.nii.gz \
-	../std/std_LMVPA009_${mask}_${model}.nii.gz \
-	../std/std_LMVPA010_${mask}_${model}.nii.gz \
-	../std/std_LMVPA011_${mask}_${model}.nii.gz \
-	../std/std_LMVPA013_${mask}_${model}.nii.gz \
-	../std/std_LMVPA014_${mask}_${model}.nii.gz \
-	../std/std_LMVPA015_${mask}_${model}.nii.gz \
-	../std/std_LMVPA016_${mask}_${model}.nii.gz \
-	../std/std_LMVPA017_${mask}_${model}.nii.gz \
-	../std/std_LMVPA018_${mask}_${model}.nii.gz \
-	../std/std_LMVPA019_${mask}_${model}.nii.gz 
+	fslmerge -t ../${MASK}_${MODEL}_Group.nii.gz \
+	../std/std_LMVPA001_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA002_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA003_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA005_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA006_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA007_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA008_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA009_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA010_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA011_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA013_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA014_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA015_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA016_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA017_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA018_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA019_${MASK}_${MODEL}.nii.gz 
 
 	cd ..
 fi
 
-randomise -i ${mask}_${model}_Group.nii.gz -o n1000_${mask}_${model} \
+randomise -i ${MASK}_${MODEL}_Group.nii.gz -o n1000_${MASK}_${MODEL} \
 	-v 5 -d $desDir/mfx_design.mat -t $desDir/mfx_design.con \
 	-T -x --uncorrp -n 1000 -m ${projectDir}/data/standard/3mm_grayMatter

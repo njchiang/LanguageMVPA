@@ -33,6 +33,10 @@ case $key in
     MASK="$2"
     shift # past argument
     ;;
+	-c|--chance)
+    CHANCE="$2"
+    shift # past argument
+    ;;
     *)
             # unknown option
     ;;

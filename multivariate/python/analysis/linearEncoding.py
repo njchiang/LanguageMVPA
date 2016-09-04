@@ -6,7 +6,6 @@
 """
 Linear regression encoding model (for basic features)
 call from command line to flexibly change the mask and feature space. This way the file doesn't have to be continually modified.
-
 """
 import os
 from mvpa2.datasets.mri import map2nifti
@@ -147,7 +146,7 @@ def main(argv):
         for i in np.arange(0, 300):
             thisContrast.append('word2vec' + str(i))
 
-    sg_params = [49, 2]
+    sg_params = [79, 2]
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 
