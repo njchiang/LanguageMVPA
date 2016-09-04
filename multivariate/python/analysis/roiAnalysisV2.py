@@ -8,149 +8,170 @@
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
-    plat = 'mac'
-    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+    plat = 'usb'
+    # plat = 'mac'
+    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/analysis')
+    sys.path.append('/Users/njchiang/GitHub/python-fmri-utils/utils')
+    debug = True
 else:
     plat = 'win'
-    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
-from mvpa2.suite import *
-import lmvpautils as lmvpa
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
+    sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
+    debug = False
+
 import os
 
 print "Initializing..."
 # initialize paths
+import lmvpautils as lmvpa
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
-subList = subList.keys()
 # nVox = 100
 # initialize subjects, masks, contrast
-mask = "pic_semantics_langNet"
-con = "verb"
-# dsType = "Lang"
-dsType = "Pic"
+roi = "left_IFG_operc"
+con = "syntax"
+chance = .25
+dsType = "Lang"
+nVox = 500
+# dsType = "Pic"
+
+cname = 'LinearSVM'
+from mvpa2.clfs import svm
+clf = svm.LinearCSVMC()
+preproc = 'None'
+# feature selection
+# preproc = 'fsel-'+str(nVox)
+# fsel=LDA()
+from mvpa2.clfs.warehouse import OneWayAnova, LDA
+fsel = OneWayAnova()
+import mvpa2.featsel as fs
+fselector = fs.helpers.FixedNElementTailSelector(nVox, tail='upper',
+                                                 mode='select', sort=False)
+# fselector = fs.helpers.FractionTailSelector(0.05, mode='select', tail='upper')
+sbfs = fs.base.SensitivityBasedFeatureSelection(fsel, fselector,
+                                                enable_ca=['sensitivities'])
+from mvpa2.clfs.meta import FeatureSelectionClassifier, MappedClassifier
+fclf = FeatureSelectionClassifier(clf, sbfs)
+
+from mvpa2.measures.base import CrossValidation
+from mvpa2.misc import errorfx
+from mvpa2.generators.partition import NFoldPartitioner
+
+cv = CrossValidation(fclf,
+                     NFoldPartitioner(attr='chunks'),
+                     errorfx=errorfx.mean_match_accuracy)
+
+import numpy as np
+from mvpa2.misc.io.base import SampleAttributes
+cv_attr = SampleAttributes(os.path.join(paths[3], (con + "_attribute_labels.txt")))
+
+from mvpa2.measures import rsa
+dsm = rsa.PDist(square=True)
+# searchlight
+# import searchlightutils as sl
+# from mvpa2.measures.searchlight import sphere_searchlight
+# cvSL = sphere_searchlight(cv, radius=r)
+# lres = sl.run_cv_sl(cvSL, fds[lidx].copy(deep=False))
+
+lresults = []
+presults = []
+l2presults = []
+p2lresults = []
+rsaresults = []
+for sub in subList.keys():
+    betas = lmvpa.loadsubbetas(paths, sub, m=roi, a=cv_attr)
+    rsaresults.append(dsm(betas))
+
+    # should i zscore?
+    lidx = np.arange(32)
+    pidx = np.arange(32, 64)
+
+    lres = cv(betas[lidx].copy())
+    lresults.append(lres)
+    print "language: " + str(np.mean(lres.samples))
+    cv.untrain()
+    pres = cv(betas[pidx].copy())
+    presults.append(pres)
+    print "pictures: " + str(np.mean(pres.samples))
+    cv.untrain()
+
+    fclf.train(betas[lidx].copy())
+    l2presults.append(np.mean(fclf.predict(betas[pidx]) == betas[pidx].sa.targets))
+    fclf.untrain()
+    fclf.train(betas[pidx])
+    p2lresults.append(np.mean(fclf.predict(betas[lidx]) == betas[lidx].sa.targets))
 
 
-# initialize the classifier
-# def initCV(nf):
-def initCV():
-    # initialize classifier
-    # clf = LinearCSVMC()
-    clf = LinearNuSVMC()
-    # clf = RbfNuSVMC()
-    # feature selection helpers*
-    # fselector = FixedNElementTailSelector(nf, tail='upper',
-    #                                       mode='select',sort=False)
-    # sbfs = SensitivityBasedFeatureSelection(OneWayAnova(), fselector,
-    #                                         enable_ca=['sensitivities'])
-    # create classifier with automatic feature selection
-    # c = RidgeReg()
-    # cv = CrossValidation(c, part.NFoldPartitioner(attr='chunks'), errorfx=errorfx.corr_error_prob)
-    # fsclf = FeatureSelectionClassifier(clf, sbfs)
-    # cv = CrossValidation(fsclf,
-    cv = CrossValidation(clf,
-                         NFoldPartitioner(attr='chunks'),
-                         errorfx=mean_match_accuracy)
-    # cv = CrossValidation(fclf, NFoldPartitioner(), errorfx=lambda p, t: np.mean(p == t),  enable_ca=['stats'])
-    return cv
+import matplotlib.pyplot as plt
+def plotsubs(lr, pr, l2p, p2l, c=None, title=None, bar_width=.2, opacity=.4, error_config={'ecolor': '0.3'}):
+    # results is the concatenated output of cv across subjects... or something.
+    f, (ax1, ax2) = plt.subplots(2, figsize=(12,6))
+    index = np.arange(len(lr))
+    lheights = []
+    lerrbars = []
+    pheights = []
+    perrbars = []
+
+    for i in lr:
+        lheights.append(np.mean(i.samples))
+        lerrbars.append(np.std(i.samples))
+    lheights = np.array(lheights)
+    lstd = np.array(lerrbars)
+
+    rects1 = ax1.bar(index, lheights, bar_width,
+                     alpha=opacity,
+                     color='b',
+                     yerr=lstd,
+                     error_kw=error_config,
+                     label='Language')
+    for i in pr:
+        pheights.append(np.mean(i.samples))
+        perrbars.append(np.std(i.samples))
+    pheights=np.array(pheights)
+    pstd = np.array(perrbars)
+    rects2 = ax1.bar(index+bar_width, pheights, bar_width,
+                     alpha=opacity,
+                     color='r',
+                     yerr=pstd,
+                     error_kw=error_config,
+                     label='Picture')
 
 
-# load the data
-def loadSubData(m, c, t):
-    # subFileName = os.path.join(betaPath, t + "_" + m + "_" + c + ".nii.gz")
-    cv_attr = SampleAttributes(os.path.join(paths[1], 'labels', (c + "_attribute_labels.txt")))
-    d = []
-    for i in range(0, len(subList)):
-        sub = subList[i]
-        # print sub
-        tmp = lmvpa.loadsubbetas(paths, sub, m=mask, a=cv_attr)
-        if tmp.shape[1] > 0:
-            print "added"
-            if dsType == "Lang":
-                d.append(tmp[0:32])
-            elif dsType == "Pic":
-                d.append(tmp[32:64])
-            else:
-                d.append(tmp)
-    # h5save(subFileName, d)
-    return d
+    l2pheights=np.array(l2p)
+    rects3 = ax1.bar(index+bar_width+bar_width, l2pheights, bar_width,
+                     alpha=opacity,
+                     color='g',
+                     error_kw=error_config,
+                     label='L2P')
 
+    p2lheights=np.array(p2l)
+    rects4 = ax1.bar(index+bar_width+bar_width+bar_width, p2lheights, bar_width,
+                     alpha=opacity,
+                     color='y',
+                     error_kw=error_config,
+                     label='P2L')
 
-# run the analysis
-def runWSRoi(fullDataset):
-    # inject the subject ID into all datasets
-    for i, sd in enumerate(fullDataset):
-        sd.sa['subject'] = np.repeat(i, len(sd))
-    _ = [zscore(ds) for ds in fullDataset]
-    wsc_start_time = time.time()
-    cv = initCV()
-    wsc_results = [cv(j) for j in fullDataset]
-    wsc_results = vstack(wsc_results)
-    print "done in " + str((time.time() - wsc_start_time,)) + " seconds"
-    print "Avg within-subject accuracy: " + str(np.mean(wsc_results)) + " +/- " + str(np.std(wsc_results) / np.sqrt(len(fullDataset) - 1))
-    # stats for fold
-    for f in range(0, len(fullDataset[0].UC)):
-        tmp = np.take(wsc_results.samples, np.arange(f, len(wsc_results), len(fullDataset[0].UC)))
-        print "Avg for fold " + str(f+1) + ": " + str(np.mean(tmp)) + " +/- " + str(np.std(tmp) / np.sqrt(len(tmp) - 1))
-        del tmp
-    # stats for sub
-    for s in range(0, len(fullDataset)):
-        tmp = np.take(wsc_results.samples, np.arange(s*len(fullDataset[0].UC), (s+1)*len(fullDataset[0].UC)))
-        print "Avg for sub " + str(s+1) + ": " + str(np.mean(tmp)) + " +/- " + str(np.std(tmp) / np.sqrt(len(tmp) - 1))
-        del tmp
-    return wsc_results
+    if not c is None:
+        ax1.plot((0, len(lr)), (c,c), 'k-', alpha=opacity/2, label='chance')
+        ax2.plot((0, len(lr)), (c,c), 'k-', alpha=opacity/2, label='chance')
+    ax1.set_xlabel('Subjects')
+    ax1.set_ylabel('Accuracy')
+    ax2.set_ylabel('Accuracy')
+    if not desc is None:
+        ax1.set_title(title)
+    else:
+        ax1.set_title('Classification Accuracies')
 
-if 'cross' in con:
-    slType = "cross classification"
-    slInt = 0
-    dsType = "Full"
-elif con == "stimtype":
-    dsType = "Full"
-    sInt = 1
-    slType = "cross validation"
-else:
-    slType = "cross validation"
-    slInt = 1
+    ax1.legend()
+    # ax2.legend()
+    ax1.set_ylim(0, 1)
+    ax2.set_ylim(0, 1)
+    ax2.boxplot([lheights, pheights, l2pheights, p2lheights], labels=['Language', 'Pictures', 'L2P', 'P2L'])
+    plt.show()
 
-# make sure everything is okay.
-configMessage = "Analysis type: " + slType \
-    + "\nNumber of subjects: " + str(len(subList))  \
-    + "\nMask: " + mask \
-    + "\nContrast: " + con \
-    + "\nSet: " + dsType
-print configMessage
+from string import Template
+desc = Template('$con: Classifier($c) Mask($m)')
+title = desc.substitute(con=con,  c=cname, m=roi)
+plotsubs(lresults, presults, l2presults, p2lresults, c=chance, title=title)
 
-cont = raw_input("Continue? (y/n) \n")
-if cont != 'y':
-    print "not confirmed, exiting... "
-    sys.exit()
-
-# load the data
-ds_all = loadSubData(mask, con, dsType)
-
-# number of subjects
-print "\n\nDataset Review..."
-print "Number of subjects: " + str(len(ds_all))
-# number of categories
-print "Number of categories: " + str(len(ds_all[0].UT))
-# number of runs
-print "Number of folds: " + str(len(ds_all[0].UC))
-# number timepoints
-print "Number of timepoints: " + str(len(ds_all[0]))
-# numVoxels
-print "Number of voxels: " + str((ds_all[0].shape[1]))
-cont = raw_input("Continue? (y/n) \n")
-if cont != 'y':
-    print "not confirmed, exiting... "
-    sys.exit()
-else:
-    print "Running ROI analysis... "
-
-print "Running " + dsType + " dataset"
-res = runWSRoi(ds_all)
-
-
-"""
-  try:
-        print "Found previously generated file, loading..."
-        d = h5load(subFileName)
-    except IOError:
-        print "Could not load dataset, regenerating..." """
+import rsautils as ru
+ru.plot_mtx(ru.rankTransform(np.mean(np.dstack(rsaresults), axis=2)), betas.sa.targets, 'ROI pattern correlation distances')
