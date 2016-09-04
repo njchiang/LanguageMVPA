@@ -68,5 +68,6 @@ while (1)
         nextTime = nextTime+sampleTime;
     end
 end;
+
 HideCursor(0);
 

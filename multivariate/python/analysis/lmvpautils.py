@@ -8,14 +8,16 @@ def initpaths(platform):
     p = []
     if 'win' in platform:
         p.append("D:\\fmri\\LanguageMVPA")
-        p.append("D:\GitHub\LanguageMVPA\multivariate\python")
+        p.append("D:\\GitHub\\LanguageMVPA\\multivariate\\python")
+        p.append("D:\\CloudStation\\Grad\\Research\\LanguageMVPA")
     elif 'mac' in platform:
         p.append("/Volumes/fmri/LanguageMVPA")
         p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
+        p.append('Users/njchiang/CloudStation/Grad/Research/LanguageMVPA')
     elif 'usb' in platform:
         p.append("/Volumes/JEFF/UCLA/LMVPA/")
         p.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python')
-
+        p.append('Users/njchiang/CloudStation/Grad/Research/LanguageMVPA')
     p.append(os.path.join(p[1], "labels"))
     p.append(os.path.join(p[0], "Maps", "PyMVPA"))
     # c = ["stim", "verb", "anim", "AP", "CR", "syntax"]
@@ -25,6 +27,26 @@ def initpaths(platform):
     for i, name in enumerate(tmpc[0, :]):
         c[name] = tmpc[1:, i]
 
+    # manualTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsManual.txt'), dtype=str),
+    #                           np.repeat('0', 44), np.repeat('rest', 44)))
+    # for i in np.arange(manualTopics.shape[1]):
+    #     c['manualTopic' + str(i)] = manualTopics[:,i]
+    #
+    # pcaTopics = np.vstack((np.loadtxt(os.path.join(p[3], 'verbTopicsPCA.txt'), dtype=str),
+    #                        np.repeat('0', 6), np.repeat('rest', 6)))
+    # for i in np.arange(pcaTopics.shape[1]):
+    #     c['pcaTopic' + str(i)] = pcaTopics[:, i]
+
+    w2vSub = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecSubs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+    w2vVerb = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecVerbs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+    w2vObj = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecObjs.txt'), dtype=str),
+                             np.repeat('0', 300), np.repeat('rest', 300)))
+
+    w2vFeatures = w2vVerb
+    for i in np.arange(w2vFeatures.shape[1]):
+        c['word2vec' + str(i)] = w2vFeatures[:, i]
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
     s = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
@@ -156,7 +178,8 @@ def loadmotionparams(p, s):
     return res
 
 
-def amendtimings(ds, b):
+def amendtimings(ds, b, extras=None):
+    # have this add all of the extra stuff
     from mvpa2.datasets import eventrelated as er
     import numpy as np
     TR = np.median(np.diff(ds.sa.time_coords))
@@ -174,7 +197,20 @@ def amendtimings(ds, b):
             else:
                 ev['amplitude'] = 1
             if ev['duration'] is not '0':
+                # add extra regressors
+                if extras is not None:
+                    for k in extras.keys():
+                        if 'manualTopic' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                        # add manualTopics
+                        if 'pcaTopic' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                        if 'word2vec' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                    # add PC topics
                 events.append(ev)
+
+
 
         if i < len(b)-1:
             idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
@@ -209,6 +245,30 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
             names.append('animate')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
+
+        elif key == 'verb': # isn't right. we need to find something that's continuous...
+            names.append('touch')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))) # can multiply this with the feature vector...
+            names.append('light')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])))
+            names.append('hit')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0, 0, 0, 0])))
+            names.append('crush')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0])))
+            names.append('kiss')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0])))
+            names.append('stretch')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 1, 0, 0, 0])))
+            names.append('kick')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0])))
+            names.append('console')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0])))
+        elif key == 'stim':
+            # leave anim as binary
+            names.append('lang')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
+            names.append('pic')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
         else:
         # take the first and last ones out
             idx = np.arange(len(dm[key].names))
@@ -216,8 +276,10 @@ def make_parammat(dm):
             idx[-1] = 0
             pd.append(np.dot(dm[key].matrix, idx))
             names.append(key)
-    pd.append(np.ones(np.shape(pd[-1])))
-    names.append('constant')
+    # don't need constant because normalized data
+    # pd.append(np.ones(np.shape(pd[-1])))
+    # names.append('constant')
+
     out.matrix = np.array(pd).T
     out.names = names
     return out
@@ -432,23 +494,6 @@ def makebinarymodel(l):
         m = m1*m2
     return 1-m
 
-
-def initrsa(c_all, p):
-    import numpy as np
-    from mvpa2.misc.io.base import SampleAttributes
-    import os
-    a = np.array([SampleAttributes(os.path.join(p[4], (c + "_attribute_labels.txt"))).targets for c in c_all],
-                 dtype=np.int64)
-    m = np.zeros([a.shape[1], a.shape[1]])
-    for i in np.arange(a.shape[0]):
-        m += makebinarymodel(a[i, ])
-    from mvpa2.base.learner import ChainLearner
-    from mvpa2.mappers.shape import TransposeMapper
-    from mvpa2.measures import rsa
-    tdsm = rsa.PDistTargetSimilarity(rsa.squareform(m))
-    return ChainLearner([tdsm, TransposeMapper()])
-######################################
-# quality control:
 
 
 def testsg(ds, w, p, voxIdx, c='chunks'):
