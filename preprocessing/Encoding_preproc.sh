@@ -4,7 +4,11 @@ registers each run to the example_func!
 doc
 
 projectDir=/Volumes/fmri/LanguageMVPA/data
-for i in 001 002 003 005 006 007 008 009 010 011 013 014 015 016 017 018 019
+
+# this part does regressed data
+# 001 002 003 005 006 007 008 009 010 011 013 014 015 016 017 018 019
+
+for i in 011
 do
 	s=LMVPA${i}
 	echo ${s}
@@ -12,11 +16,12 @@ do
 	for scan in ${s}_*_mc.nii.gz
 	do
 		r=`echo ${scan} | cut -d '_' -f2`
+		scp njchiang@funcserv1.psych.ucla.edu:/space/raid5/data/monti/Analysis/LanguageMVPA/${s}/${s}_${r}_mc.feat/stats/res4d.nii.gz ${s}_${r}_mc_reg.nii.gz
 		if [[ "$r" == "Run1" ]] 
 		then
-			cp ${scan} ../${s}_${r}.nii.gz
+			cp ${s}_${r}_mc_reg.nii.gz ../${s}_${r}_reg.nii.gz
 		else
-			flirt -in ${scan} -ref example_func.nii.gz -out ../${s}_${r}.nii.gz -applyxfm -init ../../reg/${r}_to_1.mat
+			flirt -in ${s}_${r}_mc_reg.nii.gz -ref example_func.nii.gz -out ../${s}_${r}_reg.nii.gz -applyxfm -init ../../reg/${r}_to_1.mat
 		fi
 	done
 done	
@@ -42,4 +47,23 @@ do
 
   done
 done
+
+for i in 001 002 003 005 006 007 008 009 010 011 013 014 015 016 017 018 019
+do
+	s=LMVPA${i}
+	echo ${s}
+	cd ${projectDir}/${s}/func/extra
+	for scan in ${s}_*_mc.nii.gz
+	do
+		r=`echo ${scan} | cut -d '_' -f2`
+		scp njchiang@psych.ucla.edu:/space/raid5/data/monti/Analysis/LanguageMVPA/${s}/${s}_${r}_mc.feat/stats/res4d.nii.gz ${s}_${r}_mc_reg.nii.gz
+		if [[ "$r" == "Run1" ]] 
+		then
+			cp ${scan} ../${s}_${r}.nii.gz
+		else
+			flirt -in ${scan} -ref example_func.nii.gz -out ../${s}_${r}.nii.gz -applyxfm -init ../../reg/${r}_to_1.mat
+		fi
+	done
+done	
+
 func

@@ -1,52 +1,125 @@
 #!/bin/bash
 :<<doc
-registers stat maps to standard space
-runs randomise
-usage:
-sh postprocess_LMVPA.sh PyMVPA grayMatter cross_anim_L2P_ccsl 50
+This script runs randomise using the sign flip for any single on the Language MVPA dataset. 
+First section determines OS to properly allocate filepaths
+
+First this checks if the randomise input already exists, then if not it reregisters/standardizes the raw images
+Arguments:
+1: directory of files (e.g. Maps/Encoding)
+2: MASK name (in fmri/data/standard)
+3: MODEL name
+4: CHANCE level (in case of MVPA, 0 for encoding or RSA)
+
+example usage:
+sh postprocess_mfx.sh Maps/Encoding grayMatter cross_anim_L2P_ccsl 0
+
 doc
 
-#standard=${FSLDIR}/data/standard/MNI152_T1_2mm_brain.nii.gz
-model=${3}
-mask=${2}
-chance=${4}
-projectDir=/Volumes/fmri/LanguageMVPA
-#projectDir=/Volumes/JEFF/UCLA/LMVPA
-#projectDir=/media/sf_fmri/LanguageMVPA
-refImage=${projectDir}/MNI152_T1_3mm_brain.nii.gz
-refMask=${projectDir}/fnirt/MNI152_T1_3mm_brain_mask.nii.gz
-targetDir=${projectDir}/Maps/${1}
-
-cd ${targetDir}
-#move raw outputs
-mkdir raw
-mkdir std
-mv *_${mask}_${model}.nii.gz raw
-cd raw
-for indMap in `ls | grep _${mask}_${model}.nii.gz`
+CHANCE=0
+while [[ $# -gt 1 ]]
 do
-sub=`echo ${indMap} | cut -d '_' -f1`
-echo ${sub}
-fslmaths ${projectDir}/data/$sub/masks/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
+key="$1"
 
-if [ "$chance" = "0" ]
-then
-	cp ${indMap} rnd_${indMap}
-else
-	fslmaths tmp.nii.gz -mul ${chance} tmp.nii.gz
-	fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
-fi
-
-
-regMat=${projectDir}/data/$sub/reg/${sub}_example_func2standard.mat
-
-flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} \
-	-applyxfm -init ${regMat}
-rm rnd_${indMap} tmp.nii.gz
+case $key in
+    -n|--model)
+    MODEL="$2"
+    shift # past argument
+    ;;
+    -p|--path)
+    RESPATH="$2"
+    shift # past argument
+    ;;
+    -m|--mask)
+    MASK="$2"
+    shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
 done
 
-fslmerge -t ../${mask}_${model}_Group.nii.gz ../std/std*_${mask}_${model}*nii.gz
-randomise -i ../${mask}_${model}_Group.nii.gz -o ../n1000_${mask}_${model} \
-	-v 5 -1 -T --uncorrp -n 1000 -m ${projectDir}/masks/3mm_grayMatter
 
 
+# check PLATFORM
+PLATFORM='unknown'
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+   PLATFORM='linux'
+   ROOTDIR=/mnt/d
+   HOMEDIR=$ROOTDIR
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+   PLATFORM='mac'
+   ROOTDIR=/Volumes/fmri
+   HOMEDIR=/Users/njchiang
+fi
+
+echo "PLATFORM  = ${PLATFORM}" 
+echo "ROOTDIR  = ${ROOTDIR}"
+echo "HOMEDIR  = ${HOMEDIR}"
+echo "FILE PATH  = ${RESPATH}"
+echo "MODEL     = ${MODEL}"
+echo "MASK    = ${MASK}"
+echo "CHANCE    = ${CHANCE}"
+
+projectDir=${ROOTDIR}/fmri/LanguageMVPA
+desDir=${HOMEDIR}/GitHub/LanguageMVPA/multivariate/bash
+refImage=${projectDir}/MNI152_T1_3mm_brain.nii.gz
+refMask=${projectDir}/fnirt/MNI152_T1_3mm_brain_mask.nii.gz
+targetDir=${projectDir}/${RESPATH}
+
+cd ${targetDir}
+
+if [ ! -f ${MASK}_${MODEL}_Group.nii.gz ]
+then
+	#move raw outputs
+	mkdir raw
+	mkdir std
+	mv *_${MASK}_${MODEL}.nii.gz raw
+	cd raw
+	for indMap in `ls | grep _${MASK}_${MODEL}.nii.gz`
+	do
+		sub=`echo ${indMap} | cut -d '_' -f1`
+		echo ${sub}
+		fslmaths ${projectDir}/data/$sub/masks/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
+
+		if [ "$CHANCE" = "0" ]
+		then
+			cp ${indMap} rnd_${indMap}
+		else
+			fslmaths tmp.nii.gz -mul ${CHANCE} tmp.nii.gz
+			fslmaths ${indMap} -mul 100 -sub tmp.nii.gz rnd_${indMap}
+		fi
+
+
+		regMat=${projectDir}/data/$sub/reg/${sub}_example_func2standard.mat
+
+		flirt -in rnd_${indMap} -out ../std/std_${indMap} -ref ${refImage} \
+			-applyxfm -init ${regMat}
+		rm rnd_${indMap} tmp.nii.gz
+	done
+
+	fslmerge -t ../${MASK}_${MODEL}_Group.nii.gz \
+	../std/std_LMVPA001_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA002_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA003_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA005_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA006_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA007_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA008_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA009_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA010_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA011_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA013_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA014_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA015_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA016_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA017_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA018_${MASK}_${MODEL}.nii.gz \
+	../std/std_LMVPA019_${MASK}_${MODEL}.nii.gz 
+
+	cd ..
+fi
+
+randomise -i ${MASK}_${MODEL}_Group.nii.gz -o n1000_${MASK}_${MODEL} \
+	-v 5 -1 -T -x --uncorrp -n 1000 -m ${projectDir}/data/standard/3mm_grayMatter

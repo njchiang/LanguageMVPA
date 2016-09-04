@@ -11,8 +11,9 @@ Two ways to do cross-validation:
 This script runs version (1)
 let R = number of regressors
 betas will be 4R by nVox.
-should i include probe in the testing?
+should i include probe in the testing? can zero out all betas for probes
 compare to regular regression as baseline
+should each probe be individually coded?
 """
 import sys
 # initialize stuff
@@ -23,16 +24,17 @@ if sys.platform == 'darwin':
     debug = True
 else:
     plat = 'win'
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
     sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
     debug = False
 
 import lmvpautils as lmvpa
 debug = False
-thisContrast = ['syntax']
+thisContrast = ['anim']
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-alpha = 1000
+alpha = 500
 
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
@@ -54,6 +56,13 @@ from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
 import SavGolFilter as sg
 
+
+# def estimatenoise(ds):
+    # rearrange other 3 (original) timeseries to predict the left out one.
+    # can be run on either the betas or on the original timeseries...
+    #
+
+
 # use the betas to predict timeseries for left out chunk
 def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
     # iterate through the attributes of the dataset
@@ -63,15 +72,35 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
         ds = ds[idx].copy()
     else:
         des = np.array(betas.sa['regressors']).T
+        ds = ds.copy()
+    # this only extracts the probes...
+    regIdx = np.array([i != 'glm_label_probe' for i in betas.sa['regressor_names']])
+    betas = betas[regIdx].copy()
+    des = des[:, regIdx]
+    # zero out betas for probe... or slice des by the those indices.
     # need to only pull the correct betas...
     res = []
     for i in ds.sa[part_attr].unique:
         trainidx = ds.sa['chunks'].unique[ds.sa['chunks'].unique != i]
         thesebetas = []
+        thisres = []
         for j in trainidx:
-            thesebetas.append(betas.samples[betas.chunks == j])
-        # estbetas = np.vstack(thesebetas)
-        estbetas = np.mean(np.dstack(thesebetas), axis=-1) # take mean of all betas to predict...
+            # thesebetas.append(betas.samples[betas.chunks == j])
+            thesebetas=betas.samples[betas.chunks == j]
+            estbetas = np.vstack(thesebetas)
+            pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
+                      estbetas)
+            resvar = (ds.samples[ds.chunks == i] - pred).var(0)
+            Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
+            corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+            thisres.append(corrs)
+        res.append(np.mean(np.array(thisres), axis=0))
+        # CONVOLVE WITH HRF! ZOMG...
+        # take mean of all betas to predict... should probably do average of correlations
+        """ average betas
+        for j in trainidx:
+            # thesebetas.append(betas.samples[betas.chunks == j])
+        # estbetas = np.mean(np.dstack(thesebetas), axis=-1)
         pred = np.dot(des[np.array(ds.sa[part_attr]) == i][:, np.array(betas.sa[part_attr]) == i],
                       estbetas)
 
@@ -83,6 +112,7 @@ def encodingcorr(betas, ds, idx=None, part_attr='chunks'):
         Rsqs = 1 - (resvar / ds.samples[ds.chunks == i].var(0))
         corrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
         res.append(corrs)
+        """
     from mvpa2.datasets import Dataset
     return Dataset(np.vstack(res), sa={part_attr: ds.sa[part_attr].unique})
 
@@ -149,6 +179,14 @@ for sub in subList.keys():
     # refit events and regress...
     # get timing data from timing files
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
+
+    # univariate
+    # import mvpa2.datasets.eventrelated as er
+    #
+    # evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
+    #                               condition_attr=(thisContrast, 'chunks'),
+    #                               design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+    #                               return_model=True)
 
     # we can model out motion and just not use those betas.
     # Ridge

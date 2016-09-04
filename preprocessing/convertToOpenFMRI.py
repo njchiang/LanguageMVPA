@@ -35,7 +35,7 @@ def writefile(sub, run):
     cnames = open(os.path.join(projectDir, 'regressor', sub, 'orig', sub + '_' + run + '_conds.txt'), "r")
     lines = cnames.readlines()
     ofile = open(os.path.join(projectDir, 'data', sub, 'func', sub + '_' + run + '.tsv'), "w")
-    ofile.write('onset\tduration\ttrial_type\tstim\tverb\tanim\tAP\tCR\tsyntax\n')
+    ofile.write('onset\tduration\ttrial_type\tstim\tverb\tanim\tAP\tCR\tsyntax\tprobe\n')
     for i, c in enumerate(lines):
         cid = c.split('_')[0].split(':')[1] + '_' + c.split('_')[1] + '_' + c.split('_')[3] \
                + '_' + c.split('_')[4] + '_' + c.split('_')[5].split(',')[0]
@@ -49,7 +49,7 @@ def writefile(sub, run):
 #take in string and convert to stuff
 def addcondid(st):
     if st == 'probe':
-        return '0\t0\t0\t0\t0\t0'
+        return '0\t0\t0\t0\t0\t0\t1'
     else:
         stype = np.array(['s', 'l'])
         verbs = np.array(['Touch', 'Light', 'Hit', 'Crush', 'Kiss', 'Stretch', 'Kick', 'Console'])
@@ -63,7 +63,7 @@ def addcondid(st):
                 str(np.where(anim==st.split('_')[2])[0][0]+1) + '\t' + \
                 str(np.where(ap==st.split('_')[3])[0][0]+1) + '\t' + \
                 str(np.where(cr==st.split('_')[4])[0][0]+1) + '\t' + \
-                str(np.where(syntax==st.split('_')[3]+ '_' + st.split('_')[4])[0][0]+1)
+                str(np.where(syntax==st.split('_')[3]+ '_' + st.split('_')[4])[0][0]+1) + '\t0'
 
 
 # run the damn thing

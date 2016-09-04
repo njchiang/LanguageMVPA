@@ -9,7 +9,8 @@ newDirName=${1}
 mkdir ${newDirName}
 echo "Copying..."
 cp ${2} ${newDirName}/rawImage.nii.gz
-mask=/media/sf_fmri/LanguageMVPA/masks/3mm_grayMatter.nii.gz
+#mask=/media/sf_fmri/LanguageMVPA/masks/3mm_grayMatter.nii.gz
+mask=/Volumes/fmri/LanguageMVPA/masks/3mm_grayMatter.nii.gz
 
 cd ${newDirName}
 
@@ -49,5 +50,8 @@ fi
 clustSize=`echo ${tmp} | cut -d ' ' -f3` #p=.05 cluster size
 
 echo "output"
-${FSLDIR}/bin/cluster -z 1Sample.nii.gz -t ${tCutoff} --minextent=${clustSize} --othresh=p01_c05_image.nii.gz > p01_c05_clusters.txt
+${FSLDIR}/bin/cluster -z 1Sample.nii.gz -t ${tCutoff} --minextent=${clustSize} --othresh=../${newDirName}_p01_c05_image.nii.gz > ../${newDirName}_p01_c05_clusters.txt
 
+echo "cleaning up"
+cd ..
+rm -r ${newDirName}
