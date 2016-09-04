@@ -33,7 +33,7 @@ else:
 import lmvpautils as lmvpa
 import numpy as np
 
-debug = True
+debug = False
 
 thisContrast = ['probe', 'ap', 'cr']
 thisContrastStr = '+'.join(thisContrast)

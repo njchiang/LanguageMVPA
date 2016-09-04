@@ -24,9 +24,9 @@ import lmvpautils as lmvpa
 debug = False
 # thisContrast = ['probe', 'word2vec0']
 # thisContrast = ['anim', 'verb', 'ap', 'cr']
-thisContrast = ['verb', 'ap', 'cr', 'probe']
-# thisContrast = ['ap', 'cr']
-# thisContrast = ['verb']
+# thisContrast = ['verb', 'ap', 'cr', 'probe']
+# thisContrast = ['ap', 'cr', 'probe']
+thisContrast = ['verb', 'probe']
 # thisContrast = ['anim', 'verb']
 # thisContrast = ['anim', 'ap', 'cr']
 # thisContrast = ['anim']
