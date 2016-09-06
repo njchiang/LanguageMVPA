@@ -87,7 +87,7 @@ then
 		echo ${sub}
 		fslmaths ${projectDir}/data/$sub/masks/${sub}_grayMatter.nii.gz -bin tmp.nii.gz
 
-		if [ "$CHANCE" = "0" ]
+		if [ "$CHANCE" == "0" ]
 		then
 			cp ${indMap} rnd_${indMap}
 		else
