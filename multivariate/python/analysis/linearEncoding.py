@@ -146,7 +146,7 @@ def main(argv):
         for i in np.arange(0, 300):
             thisContrast.append('word2vec' + str(i))
 
-    sg_params = [79, 2]
+    sg_params = [49, 2]
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 

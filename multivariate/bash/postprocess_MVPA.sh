@@ -127,3 +127,9 @@ fi
 
 randomise -i ${MASK}_${MODEL}_Group.nii.gz -o n1000_${MASK}_${MODEL} \
 	-v 5 -1 -T -x --uncorrp -n 1000 -m ${projectDir}/data/standard/3mm_grayMatter
+
+fdr -i n1000_${MASK}_${MODEL}_tfce_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
+	-q 0.05 -a n1000_${MASK}_${MODEL}_tfce_fdrp_tstat1
+
+fdr -i n1000_${MASK}_${MODEL}_vox_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
+	-q 0.05 -a n1000_${MASK}_${MODEL}_vox_fdrp_tstat1
