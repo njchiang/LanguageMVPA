@@ -85,12 +85,12 @@ def runsub(sub, thisContrast, thisContrastStr,
 
     covarmat = None
     mus = None
-    lwts, lalphas, lres = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
+    lwts, lalphas, lres, lceil = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
                                               cov0=covarmat, mu0=mus, part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
-    pwts, palphas, pres = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
+    pwts, palphas, pres, pceil = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
@@ -111,12 +111,15 @@ def runsub(sub, thisContrast, thisContrastStr,
     map2nifti(thisDS, dataset.vstack([lalphas, palphas])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
                                   '_ridge_alphas.nii.gz'))
+    map2nifti(thisDS, dataset.vstack([lceil, pceil])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                  '_ridge_ceiling.nii.gz'))
 
-    del lres, pres, lwts, pwts, lalphas, palphas
+    del lres, pres, lwts, pwts, lalphas, palphas, lceil, pceil
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
-    cwts, calphas, cres = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=nchunks,
+    cwts, calphas, cres, cceil = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
@@ -137,7 +140,11 @@ def runsub(sub, thisContrast, thisContrastStr,
     map2nifti(thisDS, calphas[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_alphas.nii.gz'))
 
-    del cres, cwts, calphas
+    map2nifti(thisDS, cceil[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_ceiling.nii.gz'))
+    map2nifti(thisDS, cceil[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_ceiling.nii.gz'))
+    del cres, cwts, calphas, cceil
 
 
 def main(argv):

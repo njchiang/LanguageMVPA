@@ -80,8 +80,8 @@ def runsub(sub, thisContrast, filterLen, filterOrd, thisContrastStr, roi='grayMa
     ldes.matrix = ldes.matrix[lidx]
     pdes.matrix = pdes.matrix[pidx]
 
-    lwts, lres = bsr.bootstrap_linear(rds[lidx], ldes, part_attr='chunks', mode='test')
-    pwts, pres = bsr.bootstrap_linear(rds[pidx], pdes, part_attr='chunks', mode='test')
+    lwts, lres, lceil = bsr.bootstrap_linear(rds[lidx], ldes, part_attr='chunks', mode='test')
+    pwts, pres, pceil = bsr.bootstrap_linear(rds[pidx], pdes, part_attr='chunks', mode='test')
 
     # now I have betas per chunk. could just correlate the betas, or correlate the predictions for corresponding runs
     print 'language ' + str(np.mean(lres))
@@ -95,12 +95,15 @@ def runsub(sub, thisContrast, filterLen, filterOrd, thisContrastStr, roi='grayMa
     map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
         .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
                                   '_univar_betas.nii.gz'))
+    map2nifti(thisDS, dataset.vstack([lceil, pceil])) \
+        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                  '_univar_ceiling.nii.gz'))
+    del lres, pres, lwts, pwts, lceil, pceil
 
-    del lres, pres
     crossSet = thisDS.copy()
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
-    cwts, cres = bsr.bootstrap_linear(crossSet, des, part_attr='chunks', mode='test')
+    cwts, cres, cceil = bsr.bootstrap_linear(crossSet, des, part_attr='chunks', mode='test')
     print 'cross: ' + str(np.mean(cres))
 
     map2nifti(thisDS, cres[0]).to_filename(
@@ -113,6 +116,10 @@ def runsub(sub, thisContrast, filterLen, filterOrd, thisContrastStr, roi='grayMa
     map2nifti(thisDS, cwts[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_betas.nii.gz'))
 
+    map2nifti(thisDS, cceil[0]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_betas.nii.gz'))
+    map2nifti(thisDS, cceil[1]).to_filename(
+        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_betas.nii.gz'))
 
 def main(argv):
     roi = 'grayMatter'
@@ -155,7 +162,6 @@ def main(argv):
     # events for beta extraction
     # add everything as a sample attribute
 
-    logging.basicConfig(level=logging.DEBUG)
     for s in subList.keys():
         runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
                filterLen=sg_params[0], filterOrd=sg_params[1], roi='grayMatter')
