@@ -14,7 +14,7 @@ example usage:
 sh postprocess_mfx.sh Maps/Encoding grayMatter cross_anim_L2P_ccsl 0
 
 doc
-
+RETURNHERE=${PWD}
 CHANCE=0
 while [[ $# -gt 1 ]]
 do
@@ -133,3 +133,5 @@ fdr -i n1000_${MASK}_${MODEL}_tfce_p_tstat1 --oneminusp -m ${projectDir}/data/st
 
 fdr -i n1000_${MASK}_${MODEL}_vox_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
 	-q 0.05 -a n1000_${MASK}_${MODEL}_vox_fdrp_tstat1
+	
+cd ${RETURNHERE}

@@ -43,10 +43,16 @@ def initpaths(platform):
                              np.repeat('0', 300), np.repeat('rest', 300)))
     w2vObj = np.vstack((np.loadtxt(os.path.join(p[3], 'word2vecObjs.txt'), dtype=str),
                              np.repeat('0', 300), np.repeat('rest', 300)))
+    np.random.seed(100)
+    randfeat = np.vstack((np.random.rand(64, 302).astype(str),
+                         np.repeat('0', 302), np.repeat('rest', 302)))
 
     w2vFeatures = w2vVerb
     for i in np.arange(w2vFeatures.shape[1]):
         c['word2vec' + str(i)] = w2vFeatures[:, i]
+
+    for i in np.arange(randfeat.shape[1]):
+        c['random' + str(i)] = randfeat[:, i]
     # s = ["LMVPA001", "LMVPA002", "LMVPA003", "LMVPA005", "LMVPA006", "LMVPA007", "LMVPA008", "LMVPA009", "LMVPA010",
     #        "LMVPA011", "LMVPA013", "LMVPA014", "LMVPA015", "LMVPA016", "LMVPA017", "LMVPA018", "LMVPA019"]
     s = {"LMVPA001": ["Run1", "Run2", "Run3", "Run4"],
@@ -206,6 +212,8 @@ def amendtimings(ds, b, extras=None):
                         if 'pcaTopic' in k:
                             ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
                         if 'word2vec' in k:
+                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
+                        if 'random' in k:
                             ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
                     # add PC topics
                 events.append(ev)

@@ -151,7 +151,6 @@ def main(argv):
     roi = 'grayMatter'
     thisContrast = []
 
-    paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
     try:
       opts, args = getopt.getopt(argv, "hm:c:", ["mfile=", "contrast="])
@@ -171,6 +170,7 @@ def main(argv):
     if not thisContrast:
         print "not a valid contrast... exiting"
         sys.exit(1)
+    paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
     thisContrastStr = '+'.join(thisContrast)
     print(thisContrastStr)
@@ -178,6 +178,11 @@ def main(argv):
         thisContrast.remove('word2vec')
         for i in np.arange(0, 300):
             thisContrast.append('word2vec' + str(i))
+
+    if 'random' in thisContrast:
+        thisContrast.remove('random')
+        for i in np.arange(0, 302):
+            thisContrast.append('random' + str(i))
 
     sg_params = [49, 2]
     chunklen = 12  # this reflects the length of a complete trial
