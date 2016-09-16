@@ -1,4 +1,5 @@
 # utility functions used throughout lmvpa project
+zs = lambda v: (v - v.mean(0)) / v.std(0)  ## z-score function
 
 
 def initpaths(platform):
@@ -240,7 +241,7 @@ def events2dict(events):
     return evvars
 
 
-def make_parammat(dm):
+def make_parammat(dm, zscore=False):
     # assuming dm is a dict
     import numpy as np
     out=dm[dm.keys()[0]]
@@ -279,16 +280,23 @@ def make_parammat(dm):
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
         else:
         # take the first and last ones out
-            idx = np.arange(len(dm[key].names))
-            idx[0] = 0
+            idx = []
+            for i in dm[key].names:
+                idx.append(i.split('_')[-1])
             idx[-1] = 0
+            idx = np.array(idx, dtype=float)
+            # idx = np.arange(len(dm[key].names)) # need to grab the last element which will be the value
+
+            # idx[0] = 0 probe is now removed i think
             pd.append(np.dot(dm[key].matrix, idx))
             names.append(key)
     # don't need constant because normalized data
     # pd.append(np.ones(np.shape(pd[-1])))
     # names.append('constant')
-
-    out.matrix = np.array(pd).T
+    if zscore==True:
+        out.matrix = zs(np.array(pd).T)
+    else:
+        out.matrix = (np.array(pd).T)
     out.names = names
     return out
 
@@ -317,7 +325,7 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
                                  "happen.  Choose another name if defined it"
                                  % (ei, glm_condition_attr))
             ei[glm_condition_attr] = \
-                'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con])
+                'glm_label_' + str(con) + '_' + '+'.join(str(ei[c]) for c in [con])
                 # 'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con, 'chunks'])
 
     evvars = events2dict(e)

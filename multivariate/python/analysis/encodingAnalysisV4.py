@@ -4,6 +4,7 @@
 """
 Current working version of encoding analysis with L2 regularization (when no prior structure is given, this is simply ridge regression.
 call from command line to flexibly change the mask and feature space. This way the file doesn't have to be continually modified.
+train all the features, and discard some for prediction? (including motion correction?)
 """
 import os
 from mvpa2.datasets.mri import map2nifti
@@ -70,7 +71,7 @@ def runsub(sub, thisContrast, thisContrastStr,
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                      regr_attrs=None)
     # want to collapse ap and cr, but have anim separate
-    des = lmvpa.make_parammat(desX)
+    des = lmvpa.make_parammat(desX, zscore=True)
 
     # set chunklen and nchunks
     # split by language and pictures
@@ -135,9 +136,9 @@ def runsub(sub, thisContrast, thisContrastStr,
     map2nifti(thisDS, cwts[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_weights.nii.gz'))
 
-    map2nifti(thisDS, calphas[0]).to_filename(
+    map2nifti(thisDS, calphas[calphas.chunks==1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_alphas.nii.gz'))
-    map2nifti(thisDS, calphas[1]).to_filename(
+    map2nifti(thisDS, calphas[calphas.chunks==2]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_alphas.nii.gz'))
 
     map2nifti(thisDS, cceil[0]).to_filename(
@@ -150,13 +151,13 @@ def runsub(sub, thisContrast, thisContrastStr,
 def main(argv):
     roi = 'grayMatter'
     thisContrast = []
-
+    debug=False
 
     try:
-      opts, args = getopt.getopt(argv, "hm:c:", ["mfile=", "contrast="])
+        opts, args = getopt.getopt(argv, "dhm:c:", ["mfile=", "contrast=", "debug="])
     except getopt.GetoptError:
-      print 'encodingAnalysisV4.py -r <roi> -m <maskfile> -c <contrast> '
-      sys.exit(2)
+        print 'encodingAnalysisV4.py -m <maskfile> -c <contrast> '
+        sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
             print 'encodingAnalysisV4.py -m <mask> -c <contrast> '
@@ -165,8 +166,10 @@ def main(argv):
             roi = arg
         elif opt in ("-c", "--contrast"):
             thisContrast = arg.split(',')
+        elif opt in ("-d", "--debug"):
+            print "debug mode"
+            debug=True
 
-    debug=False
     if not thisContrast:
         print "not a valid contrast... exiting"
         sys.exit(1)
