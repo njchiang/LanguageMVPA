@@ -27,7 +27,7 @@ import numpy as np
 import logging
 import getopt
 from mvpa2.base import dataset
-
+from nipy.modalities.fmri.design_matrix import make_dmtx
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -82,7 +82,7 @@ def testmodel(wts, des, ds, tc, use_corr=True):
 
 def runsub(sub, thisContrast, thisContrastStr, testContrast,
            filterLen, filterOrd,
-           alphas=np.logspace(0, 3, 20), roi='grayMatter'):
+           alphas=1, roi='grayMatter'):
     thisSub = {sub: subList[sub]}
     mc_params = lmvpa.loadmotionparams(paths, thisSub)
     beta_events = lmvpa.loadevents(paths, thisSub)
@@ -113,6 +113,9 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                      regr_attrs=None)
     # 'add_regs': mc_params[sub]
+
+    desX['motion'] = make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
+
     des = lmvpa.make_parammat(desX, zscore=True)
 
     # split by language and pictures
@@ -154,8 +157,8 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
 
     for t in testContrast:
         tstr = '+'.join(t)
-        lcorr = testmodel(wts=lwts, des=ldes, ds=rds[lidx], tc=t, use_corr=True)
-        pcorr = testmodel(wts=pwts, des=pdes, ds=rds[pidx], tc=t, use_corr=True)
+        lcorr = testmodel(wts=lwts, des=ldes, ds=rds[lidx], tc=cp.copy(t), use_corr=True)
+        pcorr = testmodel(wts=pwts, des=pdes, ds=rds[pidx], tc=cp.copy(t), use_corr=True)
         map2nifti(thisDS, dataset.vstack([lcorr, pcorr])) \
             .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + tstr +
                                       '_ridge_la_' + str(alphas[1]) + '_pa_' + str(alphas[2]) + '_test_corrs.nii.gz'))
@@ -174,34 +177,35 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
                                                nboots=1, corrmin=.2, singcutoff=1e-10, joined=None,
                                                use_corr=True)
     for t in testContrast:
-        ccorr = testmodel(wts=cwts, des=des, ds=crossSet, tc=t, use_corr=True)
+        tstr = '+'.join(t)
+        ccorr = testmodel(wts=cwts, des=des, ds=crossSet, tc=cp.copy(t), use_corr=True)
         map2nifti(thisDS, ccorr[0]) \
             .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + tstr +
-                                      '_P2L_ridge_alpha' + str(alphas[0]) + '_test_corr.nii.gz'))
+                                      '_P2L_ridge_alpha_' + str(alphas[0]) + '_test_corr.nii.gz'))
         map2nifti(thisDS, ccorr[1]) \
             .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + tstr +
-                                      '_L2P_ridge_alpha' + str(alphas[0]) + '_test_corr.nii.gz'))
+                                      '_L2P_ridge_alpha_' + str(alphas[0]) + '_test_corr.nii.gz'))
     print 'cross: ' + str(np.mean(cres))
     map2nifti(thisDS, cres[0]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                     '_P2L_ridge_alpha' + str(alphas[0]) + '_corr.nii.gz'))
+                     '_P2L_ridge_alpha_' + str(alphas[0]) + '_corr.nii.gz'))
     map2nifti(thisDS, cres[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                     '_L2P_ridge_alpha' + str(alphas[0]) + '_corr.nii.gz'))
+                     '_L2P_ridge_alpha_' + str(alphas[0]) + '_corr.nii.gz'))
 
     map2nifti(thisDS, cwts[cwts.chunks==1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                     '_P2L_ridge_alpha' + str(alphas[0]) + '_wts.nii.gz'))
+                     '_P2L_ridge_alpha_' + str(alphas[0]) + '_wts.nii.gz'))
     map2nifti(thisDS, cwts[cwts.chunks==2]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
                      '_L2P_ridge_alpha' + str(alphas[0]) + '_wts.nii.gz'))
 
     map2nifti(thisDS, cceil[0]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                     '_P2L_ridge_alpha' + str(alphas[0]) + '_ceiling.nii.gz'))
+                     '_P2L_ridge_alpha_' + str(alphas[0]) + '_ceiling.nii.gz'))
     map2nifti(thisDS, cceil[1]).to_filename(
         os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                     '_L2P_ridge_alpha' + str(alphas[0]) + '_ceiling.nii.gz'))
+                     '_L2P_ridge_alpha_' + str(alphas[0]) + '_ceiling.nii.gz'))
     del cres, cwts, cceil
 
 

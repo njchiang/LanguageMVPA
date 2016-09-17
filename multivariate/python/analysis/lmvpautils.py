@@ -248,13 +248,25 @@ def make_parammat(dm, zscore=False):
     pd = []
     names = []
     for key in dm.keys():
-        if key == 'anim':
+        if key == 'motion':
+            names.append('motion_0')
+            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0, 0, 0, 0])))
+            names.append('motion_1')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0])))
+            names.append('motion_2')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0])))
+            names.append('motion_3')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0])))
+            names.append('motion_4')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0])))
+            names.append('motion_5')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0])))
+        elif key == 'anim':
             # leave anim as binary
             names.append('inanimate')
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
             names.append('animate')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
-
         elif key == 'verb': # isn't right. we need to find something that's continuous...
             names.append('touch')
             pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))) # can multiply this with the feature vector...

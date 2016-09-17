@@ -136,10 +136,10 @@ fdr -i n1000_${MASK}_${MODEL}_tfce_p_tstat1 --oneminusp -m ${projectDir}/data/st
 fdr -i n1000_${MASK}_${MODEL}_vox_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
 	-q 0.05 -a n1000_${MASK}_${MODEL}_vox_fdrp_tstat1
 		
-fdr -i n1000_${MASK}_${MODEL}_tfce_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
+fdr -i n1000_${MASK}_${MODEL}_tfce_p_tstat2 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
 	-q 0.05 -a n1000_${MASK}_${MODEL}_tfce_fdrp_tstat2
 
-fdr -i n1000_${MASK}_${MODEL}_vox_p_tstat1 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
+fdr -i n1000_${MASK}_${MODEL}_vox_p_tstat2 --oneminusp -m ${projectDir}/data/standard/3mm_grayMatter \
 	-q 0.05 -a n1000_${MASK}_${MODEL}_vox_fdrp_tstat2
 	
 cd ${RETURNHERE}
