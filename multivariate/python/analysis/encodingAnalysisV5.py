@@ -49,35 +49,7 @@ import BootstrapRidge as bsr
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 
-def testmodel(wts, des, ds, tc, use_corr=True):
-    widx = wts.sa['chunks'].unique
-    didx = ds.sa['chunks'].unique
-    if len(widx) != len(didx):
-        print "unequal number of chunks... exiting"
-        return
-    if 'word2vec' in tc:
-        tc.remove('word2vec')
-        for i in np.arange(0, 300):
-            tc.append('word2vec' + str(i))
 
-    corrs=[]
-    regidx = [des.names.index(i) for i in tc]
-    for i in np.arange(len(widx)):
-        pred = np.dot(des.matrix[:, regidx],
-                      wts[wts.sa['chunks'].value == widx[i]].samples[regidx, :])[ds.sa['chunks'].value == didx[i]]
-        Presp = ds[ds.sa['chunks'].value == didx[i]].samples
-        # Find prediction correlations
-        nnpred = np.nan_to_num(pred)
-        if use_corr:
-            vcorrs = np.nan_to_num(np.array([np.corrcoef(Presp[:, ii], nnpred[:, ii].ravel())[0, 1]
-                                            for ii in range(Presp.shape[1])]))
-        else:
-            resvar = (Presp - pred).var(0)
-            Rsqs = 1 - (resvar / Presp.var(0))
-            vcorrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
-        corrs.append(vcorrs)
-    from mvpa2.datasets import Dataset
-    return Dataset(np.vstack(corrs), sa={'chunks': ds.sa['chunks'].unique}, fa=ds.fa, a=ds.a)
 
 
 def runsub(sub, thisContrast, thisContrastStr, testContrast,
@@ -129,14 +101,14 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
 
     covarmat = None
     mus = None
-    lwts, _, lres, lceil = bsr.bootstrap_ridge(ds=rds[lidx], des=ldes, chunklen=1, nchunks=1,
+    lwts, _, lres, lceil, pavgalpha = bsr.bootstrap_ridge(ds=rds[lidx], des=ldes, chunklen=1, nchunks=1,
                                                cov0=None, mu0=None, part_attr='chunks', mode='test',
                                                alphas=[alphas[1]], single_alpha=True, normalpha=False,
                                                nboots=1, corrmin=.2, singcutoff=1e-10, joined=None,
                                                use_corr=True)
     print 'language ' + str(np.mean(lres))
 
-    pwts, _, pres, pceil = bsr.bootstrap_ridge(ds=rds[pidx], des=pdes, chunklen=1, nchunks=1,
+    pwts, _, pres, pceil, pavgalpha = bsr.bootstrap_ridge(ds=rds[pidx], des=pdes, chunklen=1, nchunks=1,
                                                cov0=None, mu0=None, part_attr='chunks', mode='test',
                                                alphas=[alphas[1]], single_alpha=True, normalpha=False,
                                                nboots=1, corrmin=.2, singcutoff=1e-10, joined=None,
@@ -157,8 +129,8 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
 
     for t in testContrast:
         tstr = '+'.join(t)
-        lcorr = testmodel(wts=lwts, des=ldes, ds=rds[lidx], tc=cp.copy(t), use_corr=True)
-        pcorr = testmodel(wts=pwts, des=pdes, ds=rds[pidx], tc=cp.copy(t), use_corr=True)
+        lcorr = lmvpa.testmodel(wts=lwts, des=ldes, ds=rds[lidx], tc=cp.copy(t), use_corr=True)
+        pcorr = lmvpa.testmodel(wts=pwts, des=pdes, ds=rds[pidx], tc=cp.copy(t), use_corr=True)
         map2nifti(thisDS, dataset.vstack([lcorr, pcorr])) \
             .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + tstr +
                                       '_ridge_la_' + str(alphas[1]) + '_pa_' + str(alphas[2]) + '_test_corrs.nii.gz'))
@@ -171,14 +143,14 @@ def runsub(sub, thisContrast, thisContrastStr, testContrast,
     #                                             part_attr='chunks', mode='test', alphas=alphas[0], single_alpha=True,
     #                                             normalpha=False, corrmin=.2, singcutoff=1e-10, joined=None,
     #                                             use_corr=True)
-    cwts, _, cres, cceil = bsr.bootstrap_ridge(ds=crossSet, des=des, chunklen=1, nchunks=1,
+    cwts, _, cres, cceil, cavgalpha = bsr.bootstrap_ridge(ds=crossSet, des=des, chunklen=1, nchunks=1,
                                                cov0=None, mu0=None, part_attr='chunks', mode='test',
                                                alphas=[alphas[1]], single_alpha=True, normalpha=False,
                                                nboots=1, corrmin=.2, singcutoff=1e-10, joined=None,
                                                use_corr=True)
     for t in testContrast:
         tstr = '+'.join(t)
-        ccorr = testmodel(wts=cwts, des=des, ds=crossSet, tc=cp.copy(t), use_corr=True)
+        ccorr = lmvpa.testmodel(wts=cwts, des=des, ds=crossSet, tc=cp.copy(t), use_corr=True)
         map2nifti(thisDS, ccorr[0]) \
             .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + tstr +
                                       '_P2L_ridge_alpha_' + str(alphas[0]) + '_test_corr.nii.gz'))
@@ -272,7 +244,7 @@ def main(argv):
     for s in subList.keys():
         runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
                testContrast=testContrast, filterLen=sg_params[0], filterOrd=sg_params[1],
-               alphas=alphas, roi='grayMatter')
+               alphas=alphas, roi=roi)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

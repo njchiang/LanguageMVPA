@@ -13,7 +13,7 @@ import copy as cp
 import numpy as np
 import logging
 import getopt
-
+from nipy.modalities.fmri.design_matrix import make_dmtx
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -71,6 +71,8 @@ def runsub(sub, thisContrast, thisContrastStr,
                                      design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
                                      regr_attrs=None)
     # want to collapse ap and cr, but have anim separate
+    desX['motion'] = make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
+
     des = lmvpa.make_parammat(desX, zscore=True)
 
     # set chunklen and nchunks
@@ -89,7 +91,7 @@ def runsub(sub, thisContrast, thisContrastStr,
     lwts, lalphas, lres, lceil = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
                                               cov0=covarmat, mu0=mus, part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
-                                              nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
+                                              nboots=50, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     pwts, palphas, pres, pceil = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
@@ -188,8 +190,8 @@ def main(argv):
             thisContrast.append('random' + str(i))
 
     sg_params = [49, 2]
-    chunklen = 12  # this reflects the length of a complete trial
-    paramEst = .2  # this much data to be held out for ridge regression parameter estimation
+    chunklen = 30  # this reflects the length of a complete trial
+    paramEst = .25  # this much data to be held out for ridge regression parameter estimation
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 
@@ -199,11 +201,11 @@ def main(argv):
     # add everything as a sample attribute
 
     logging.basicConfig(level=logging.DEBUG)
-    alphas = np.logspace(-3, 3, 50)
+    alphas = np.logspace(-1, 3, 50)
     for s in subList.keys():
         runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
                filterLen=sg_params[0], filterOrd=sg_params[1],
-               paramEst=paramEst, chunklen=chunklen, alphas=alphas, roi='grayMatter')
+               paramEst=paramEst, chunklen=chunklen, alphas=alphas, roi=roi)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

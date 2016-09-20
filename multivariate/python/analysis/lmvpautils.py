@@ -228,7 +228,35 @@ def amendtimings(ds, b, extras=None):
     return ds, events
 #####################################
 # regression stuff
+def testmodel(wts, des, ds, tc, use_corr=True):
+    widx = wts.sa['chunks'].unique
+    didx = ds.sa['chunks'].unique
+    if len(widx) != len(didx):
+        print "unequal number of chunks... exiting"
+        return
+    if 'word2vec' in tc:
+        tc.remove('word2vec')
+        for i in np.arange(0, 300):
+            tc.append('word2vec' + str(i))
 
+    corrs=[]
+    regidx = [des.names.index(i) for i in tc]
+    for i in np.arange(len(widx)):
+        pred = np.dot(des.matrix[:, regidx],
+                      wts[wts.sa['chunks'].value == widx[i]].samples[regidx, :])[ds.sa['chunks'].value == didx[i]]
+        Presp = ds[ds.sa['chunks'].value == didx[i]].samples
+        # Find prediction correlations
+        nnpred = np.nan_to_num(pred)
+        if use_corr:
+            vcorrs = np.nan_to_num(np.array([np.corrcoef(Presp[:, ii], nnpred[:, ii].ravel())[0, 1]
+                                            for ii in range(Presp.shape[1])]))
+        else:
+            resvar = (Presp - pred).var(0)
+            Rsqs = 1 - (resvar / Presp.var(0))
+            vcorrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+        corrs.append(vcorrs)
+    from mvpa2.datasets import Dataset
+    return Dataset(np.vstack(corrs), sa={'chunks': ds.sa['chunks'].unique}, fa=ds.fa, a=ds.a)
 
 def events2dict(events):
     evvars = {}
