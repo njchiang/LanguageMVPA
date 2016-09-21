@@ -218,9 +218,6 @@ def amendtimings(ds, b, extras=None):
                             ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
                     # add PC topics
                 events.append(ev)
-
-
-
         if i < len(b)-1:
             idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
             ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i+1]] \
