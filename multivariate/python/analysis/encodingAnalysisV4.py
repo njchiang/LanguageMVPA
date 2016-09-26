@@ -85,18 +85,18 @@ def runsub(sub, thisContrast, thisContrastStr,
     ldes.matrix = ldes.matrix[lidx]
     pdes.matrix = pdes.matrix[pidx]
     nchunks = int(len(thisDS)*paramEst / chunklen)
-
+    nboots=50
     covarmat = None
     mus = None
     lwts, lalphas, lres, lceil = bsr.bootstrap_ridge(rds[lidx], ldes, chunklen=chunklen, nchunks=nchunks,
                                               cov0=covarmat, mu0=mus, part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
-                                              nboots=50, corrmin=.2, singcutoff=1e-10, joined=None,
+                                              nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     pwts, palphas, pres, pceil = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
-                                              nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
+                                              nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     print 'language ' + str(np.mean(lres))
 
@@ -125,7 +125,7 @@ def runsub(sub, thisContrast, thisContrastStr,
     cwts, calphas, cres, cceil = bsr.bootstrap_ridge(crossSet, des, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
-                                              nboots=15, corrmin=.2, singcutoff=1e-10, joined=None,
+                                              nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     print 'cross: ' + str(np.mean(cres))
     map2nifti(thisDS, cres[0]).to_filename(
