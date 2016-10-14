@@ -6,16 +6,19 @@
 """Encoding analysis: using only motion corrected and coregistered data. This analysis applies a Savitsky-Golay filter,
 then...
 todo: add ridge regression, maybe try crossmodal classification"""
+# initialize stuff
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
     plat = 'usb'
     # plat = 'mac'
-    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/utils')
+    sys.path.append('/Users/njchiang/GitHub/LanguageMVPA/multivariate/python/analysis')
+    sys.path.append('/Users/njchiang/GitHub/python-fmri-utils/utils')
     debug = True
 else:
     plat = 'win'
-    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\utils')
+    sys.path.append('D:\\GitHub\\LanguageMVPA\\multivariate\\python\\analysis')
+    sys.path.append('D:\\GitHub\\python-fmri-utils\\utils')
     debug = False
 import lmvpautils as lmvpa
 from sklearn import linear_model as lm
@@ -26,7 +29,7 @@ thisContrast = 'verb'
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 3
-r = 2 #searchlight radius
+r = 4 #searchlight radius
 clf = svm.LinearNuSVMC()
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
@@ -48,6 +51,8 @@ for sub in subList.keys():
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
     thisDS = dsdict[sub]
+    mc_params = lmvpa.loadmotionparams(paths, thisSub)
+    beta_events = lmvpa.loadevents(paths, thisSub)
     # savitsky golay filtering
     sg.sg_filter(thisDS, filterLen, filterOrd)
     # gallant group zscores before regression.
@@ -60,7 +65,7 @@ for sub in subList.keys():
     ## BETA EXTRACTION ##
     rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
     evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=('trial_type',  'chunks'),
+                                  condition_attr=('trial_type', 'chunks'),
                                   design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
                                   return_model=True)
 

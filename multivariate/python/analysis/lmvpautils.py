@@ -389,7 +389,7 @@ def make_parammat(dm, hrf='canonical', zscore=False):
             names.append('motion_5')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0])))
         # hardcode stim and verb
-        elif key == 'stim' or key == 'verb':
+        elif key == 'stim' or key == 'verb' or key == 'anim':
             condensematrix(dm[key], pd, names, key, hrf, op='stack')
         else:
             condensematrix(dm[key], pd, names, key, hrf, op='mult')

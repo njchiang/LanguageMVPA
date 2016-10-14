@@ -37,7 +37,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 def runsub(sub, thisContrast, thisContrastStr,
            filterLen, filterOrd,
-           paramEst, chunklen, alphas=np.logspace(0, 3, 20), write=False, roi='grayMatter'):
+           paramEst, chunklen, alphas=np.logspace(0, 3, 20), debug=False, write=False, roi='grayMatter'):
     thisSub = {sub: subList[sub]}
     mc_params = lmvpa.loadmotionparams(paths, thisSub)
     beta_events = lmvpa.loadevents(paths, thisSub)
@@ -92,13 +92,13 @@ def runsub(sub, thisContrast, thisContrastStr,
                                               cov0=covarmat, mu0=mus, part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
-                                              use_corr=True)
+                                              plot=debug, use_corr=True)
 
     pwts, palphas, pres, pceil = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
-                                              use_corr=True)
+                                              plot=debug, use_corr=True)
     print 'language ' + str(np.mean(lres))
 
     # pictures within
@@ -204,7 +204,7 @@ def main(argv):
     alphas = np.logspace(-1, 3, 50)
     for s in subList.keys():
         runsub(sub=s, thisContrast=regs, thisContrastStr=regstr,
-               filterLen=sg_params[0], filterOrd=sg_params[1],
+               filterLen=sg_params[0], filterOrd=sg_params[1], debug=debug,
                paramEst=paramEst, chunklen=chunklen, alphas=alphas, write=write, roi=roi)
 
 if __name__ == "__main__":
