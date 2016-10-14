@@ -31,7 +31,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 sub = 'LMVPA005'
 
-thisContrast = ['ap', 'cr', 'probe']
+thisContrast = ['ap', 'cr', 'probe', 'verb']
 thisContrastStr = 'ap+cr+probe'
 roi = 'grayMatter'
 filterLen = 49
@@ -63,20 +63,25 @@ if isinstance(thisContrast, basestring):
     thisContrast = [thisContrast]
 # instead of binarizing each one, make them parametric
 hrfmodel='canonical'
-desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
-                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank', 'drift_order': 0},
-                                 regr_attrs=None)
+
+# NOT SURE IF I SHOULD DO THIS OR NOT
+# ds.sa['time_coords'].value += TR
+
 desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
                                  design_kwargs={'hrf_model': 'spm', 'drift_model': 'blank', 'drift_order': 0},
                                  regr_attrs=None)
-desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
-                                 design_kwargs={'hrf_model': 'fir', 'fir_delays': [0,1,2,3], 'drift_order': 0,
-                                                'drift_model': 'blank'},
-                                 regr_attrs=None)
-desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
-                                 design_kwargs={'hrf_model': 'None', 'drift_order': 0,
-                                                'drift_model': 'blank'},
-                                 regr_attrs=None)
+# desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
+#                                  design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank', 'drift_order': 0},
+#                                  regr_attrs=None)
+# why does this drift?
+# desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
+#                                  design_kwargs={'hrf_model': 'fir', 'fir_delays': [0,1,2,3], 'drift_order': 0,
+#                                                 'drift_model': 'blank'},
+#                                  regr_attrs=None)
+# desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
+#                                  design_kwargs={'hrf_model': 'None', 'drift_order': 0,
+#                                                 'drift_model': 'blank'},
+#                                  regr_attrs=None)
 
 # these two commands are identical
 desX['motion'] = dm.make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
@@ -84,6 +89,5 @@ desX['motion'] = dm.make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_re
 # desX['motion'] = dm.DesignMatrix(matrix=mc_params[sub],
 #                                  names=['motion_0', 'motion_1', 'motion_2', 'motion_3', 'motion_4', 'motion_5'],
 #                                  frametimes=rds.sa['time_coords'].value)
-#DesignMatrix(matrix, names, frametimes)
 des = lmvpa.make_parammat(cp.copy(desX), hrf=hrfmodel, zscore=True)
 

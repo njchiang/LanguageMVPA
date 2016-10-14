@@ -78,6 +78,7 @@ def initpaths(platform):
     m = ["left_IFG_operc", "left_IFG_triang", "left_STG_post", "left_MTG_post", "grayMatter"]
     return p, s, c, m
 
+
 ######################################
 # load data
 def loadsubbetas(p, s, m="grayMatter", a=0):
@@ -135,7 +136,7 @@ def adjustevents(e, c='trial_type'):
             ee.append({'onset': np.round(d['onset']),
                        'duration': np.round(d['duration']),
                        'condition': d[c],
-                       'intensity': 1})
+                       'intensity': int(d['intensity'])})
         return ee
 
 
@@ -197,7 +198,7 @@ def amendtimings(ds, b, extras=None):
     for i, te in enumerate(theseEvents):
         for ev in te:
             ev['chunks'] = ds.sa['chunks'].unique[i]
-            ev['onset'] += TR*idx
+            ev['onset'] += idx
             # ev['targets'] = ev['condition']
             if 'intensity' in ev:
                 ev['amplitude'] = ev['intensity']
@@ -211,10 +212,14 @@ def amendtimings(ds, b, extras=None):
                         ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
             if ev['duration'] is not '0':
                 events.append(ev)
+
         if i < len(b)-1:
-            idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
-            ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i+1]] \
-                += np.max(ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i]]) + TR
+            # DO I NEED TO ADD TR TO THE FIRST ONE?!?!
+            ds.sa['time_coords'].value[ds.chunks == i+2] += np.max(ds.sa['time_coords'][ds.chunks == i+1]) + TR
+            idx = np.min(ds.sa['time_coords'][ds.chunks == i+2])
+
+    # NOT SURE IF I SHOULD DO THIS OR NOT... NO
+    # ds.sa['time_coords'].value += TR
     return ds, events
 
 
@@ -231,41 +236,44 @@ def events2dict(events):
 
 #####################################
 # regression stuff
-
-
-
 def condensematrix(dm, pd, names, key, hrf='canonical', op='mult'):
     # returns condition with probe removed
     import copy as cp
     import numpy as np
     delays = None
-
     if hrf == 'fir':
-        delays=[]
+        delays = []
         for i in dm.names:
             if i == 'constant':
                 delays.append('-1')
             else:
-                delays.append(i.split('_')[i.split('_').index('delay')+1])
+                delays.append(i.split('_')[i.split('_').index('delay') + 1])
         delays = np.array(delays, dtype=int)
-    idx = []
-    for i in dm.names:
-        if i == 'constant':
-            idx.append('0')
-        else:
-            idx.append(i.split('_')[i.split('_').index(key)+1])
-    idx = np.array(idx, dtype=float)
 
-    if delays is not None:
-        for d in np.arange(np.max(delays)+1):
-            outkey = key + '_delay_' + str(d)
-            outidx = idx[delays == d]
-            pd.append(np.dot(dm.matrix[:, delays==d], outidx))
-            names.append(outkey)
+    if op == 'stack':
+        for i in dm.names:
+            if (i != 'constant'):
+                if (i.split('_')[i.split('_').index(key) + 1] != '0'):
+                    pd.append(dm.matrix[:, dm.names.index(i)])
+                    names.append(i.replace('glm_label_', ''))
     else:
-        pd.append(np.dot(dm.matrix, idx))
-        names.append(key)
+        idx = []
+        for i in dm.names:
+            if i == 'constant':
+                idx.append('0')
+            else:
+                idx.append(i.split('_')[i.split('_').index(key)+1])
+        idx = np.array(idx, dtype=float)
 
+        if delays is not None:
+            for d in np.arange(np.max(delays)+1):
+                outkey = key + '_delay_' + str(d)
+                outidx = idx[delays == d]
+                pd.append(np.dot(dm.matrix[:, delays==d], outidx))
+                names.append(outkey)
+        else:
+            pd.append(np.dot(dm.matrix, idx))
+            names.append(key)
 
 # new make_designmat from scratch
 def make_designmat(ds, eorig, time_attr='time_coords', condition_attr='targets', design_kwargs=None, regr_attrs=None):
@@ -381,6 +389,8 @@ def make_parammat(dm, hrf='canonical', zscore=False):
             names.append('motion_5')
             pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0])))
         # hardcode stim and verb
+        elif key == 'stim' or key == 'verb':
+            condensematrix(dm[key], pd, names, key, hrf, op='stack')
         else:
             condensematrix(dm[key], pd, names, key, hrf, op='mult')
     # don't need constant because normalized data
@@ -392,10 +402,6 @@ def make_parammat(dm, hrf='canonical', zscore=False):
         out.matrix = (np.array(pd).T)
     out.names = names
     return out
-
-
-
-
 
 
 def testmodel(wts, des, ds, tc, use_corr=True):
@@ -443,6 +449,7 @@ def corrsig(N, c=None, p=.95):
         # a = tsigsq+N-2
         # return np.sqrt(2*a)/(2*a)
 
+
 ######################################
 # classification
 def makebinarymodel(l):
@@ -455,7 +462,6 @@ def makebinarymodel(l):
         m2[:, l == i] = 1
         m = m1*m2
     return 1-m
-
 
 
 def testsg(ds, w, p, voxIdx, c='chunks'):
@@ -512,97 +518,3 @@ def sgfilter(data, w, p):
     mapped = savgol_filter(data.samples, w, p, axis=0)
     return mapped
 ######################################
-
-
-"""
-ignore
-
-def make_fulldesignmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
-    # for now... loop through this and feed in one event at a time.
-    import copy
-    from nipy.modalities.fmri.design_matrix import make_dmtx
-    import numpy as np
-    # Decide/device condition attribute on which GLM will actually be done
-    glm_condition_attr = 'regressor_names'
-    if isinstance(condition_attr, basestring):
-        # must be a list/tuple/array for the logic below
-        condition_attr = [condition_attr]
-
-
-    glm_condition_attr_map = dict([(con, dict()) for con in condition_attr])  #
-    # to map back to original conditions
-    e = copy.deepcopy(e)  # since we are modifying in place
-    for ei in e:
-        if glm_condition_attr in ei:
-            raise ValueError("Event %s already has %s defined.  Should not "
-                             "happen.  Choose another name if defined it"
-                             % (ei, glm_condition_attr))
-        compound_label = ei[glm_condition_attr] = \
-            'glm_label_' + str(con) + '+'.join(
-                str(ei[con]) for con in condition_attr)
-        # and mapping back to original values, without str()
-        # for each condition:
-        for con in condition_attr:
-            glm_condition_attr_map[con][compound_label] = ei[con]
-
-    evvars = events2dict(e)
-    add_paradigm_kwargs = {}
-    if 'amplitude' in evvars:
-        add_paradigm_kwargs['amplitude'] = evvars['amplitude']
-    # create paradigm
-    if 'duration' in evvars:
-        from nipy.modalities.fmri.experimental_paradigm import BlockParadigm
-        # NiPy considers everything with a duration as a block paradigm
-        paradigm = BlockParadigm(
-            con_id=evvars[glm_condition_attr],
-            onset=evvars['onset'],
-            duration=evvars['duration'],
-            **add_paradigm_kwargs)
-    else:
-        from nipy.modalities.fmri.experimental_paradigm \
-            import EventRelatedParadigm
-        paradigm = EventRelatedParadigm(
-            con_id=evvars[glm_condition_attr],
-            onset=evvars['onset'],
-            **add_paradigm_kwargs)
-    # create design matrix -- all kinds of fancy additional regr can be
-    # auto-generated
-    if design_kwargs is None:
-        design_kwargs = {}
-
-    if not regr_attrs is None:
-        names = []
-        regrs = []
-        for attr in regr_attrs:
-            regr = ds.sa[attr].value
-            # add rudimentary dimension for easy hstacking later on
-            if regr.ndim < 2:
-                regr = regr[:, np.newaxis]
-            if regr.shape[1] == 1:
-                names.append(attr)
-            else:
-                #  add one per each column of the regressor
-                for i in xrange(regr.shape[1]):
-                    names.append("%s.%d" % (attr, i))
-            regrs.append(regr)
-        regrs = np.hstack(regrs)
-
-        if 'add_regs' in design_kwargs:
-            design_kwargs['add_regs'] = np.hstack((design_kwargs['add_regs'],
-                                                   regrs))
-        else:
-            design_kwargs['add_regs'] = regrs
-        if 'add_reg_names' in design_kwargs:
-            design_kwargs['add_reg_names'].extend(names)
-        else:
-            design_kwargs['add_reg_names'] = names
-
-    X = make_dmtx(ds.sa[time_attr].value, paradigm=paradigm, **design_kwargs)
-    for i, reg in enumerate(X.names):
-        ds.sa[reg] = X.matrix[:, i]
-
-    # for con in condition_attr:
-    #     ds.sa.pop(con)
-    return X, ds
-
-"""

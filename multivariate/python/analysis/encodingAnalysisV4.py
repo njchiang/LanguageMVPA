@@ -37,7 +37,7 @@ paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 def runsub(sub, thisContrast, thisContrastStr,
            filterLen, filterOrd,
-           paramEst, chunklen, alphas=np.logspace(0, 3, 20), roi='grayMatter'):
+           paramEst, chunklen, alphas=np.logspace(0, 3, 20), write=False, roi='grayMatter'):
     thisSub = {sub: subList[sub]}
     mc_params = lmvpa.loadmotionparams(paths, thisSub)
     beta_events = lmvpa.loadevents(paths, thisSub)
@@ -73,7 +73,7 @@ def runsub(sub, thisContrast, thisContrastStr,
     # want to collapse ap and cr, but have anim separate
     desX['motion'] = make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
 
-    des = lmvpa.make_parammat(desX, zscore=True)
+    des = lmvpa.make_parammat(desX, hrf='canonical', zscore=True)
 
     # set chunklen and nchunks
     # split by language and pictures
@@ -93,6 +93,7 @@ def runsub(sub, thisContrast, thisContrastStr,
                                               alphas=alphas, single_alpha=True, normalpha=False,
                                               nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
+
     pwts, palphas, pres, pceil = bsr.bootstrap_ridge(rds[pidx], pdes, chunklen=chunklen, nchunks=nchunks,
                                               part_attr='chunks', mode='test',
                                               alphas=alphas, single_alpha=True, normalpha=False,
@@ -104,19 +105,20 @@ def runsub(sub, thisContrast, thisContrastStr,
     print 'pictures: ' + str(np.mean(pres))
 
 # need to change outstring
-    from mvpa2.base import dataset
-    map2nifti(thisDS, dataset.vstack([lres, pres])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                                  '_ridge_corrs.nii.gz'))
-    map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                                  '_ridge_weights.nii.gz'))
-    map2nifti(thisDS, dataset.vstack([lalphas, palphas])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                                  '_ridge_alphas.nii.gz'))
-    map2nifti(thisDS, dataset.vstack([lceil, pceil])) \
-        .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
-                                  '_ridge_ceiling.nii.gz'))
+    if write:
+        from mvpa2.base import dataset
+        map2nifti(thisDS, dataset.vstack([lres, pres])) \
+            .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                      '_ridge_corrs.nii.gz'))
+        map2nifti(thisDS, dataset.vstack([lwts, pwts])) \
+            .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                      '_ridge_weights.nii.gz'))
+        map2nifti(thisDS, dataset.vstack([lalphas, palphas])) \
+            .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                      '_ridge_alphas.nii.gz'))
+        map2nifti(thisDS, dataset.vstack([lceil, pceil])) \
+            .to_filename(os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr +
+                                      '_ridge_ceiling.nii.gz'))
 
     del lres, pres, lwts, pwts, lalphas, palphas, lceil, pceil
     crossSet = thisDS.copy()
@@ -128,35 +130,36 @@ def runsub(sub, thisContrast, thisContrastStr,
                                               nboots=nboots, corrmin=.2, singcutoff=1e-10, joined=None,
                                               use_corr=True)
     print 'cross: ' + str(np.mean(cres))
-    map2nifti(thisDS, cres[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_corr.nii.gz'))
-    map2nifti(thisDS, cres[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_corr.nii.gz'))
+    if write:
+        map2nifti(thisDS, cres[0]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_corr.nii.gz'))
+        map2nifti(thisDS, cres[1]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_corr.nii.gz'))
 
-    map2nifti(thisDS, cwts[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_weights.nii.gz'))
-    map2nifti(thisDS, cwts[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_weights.nii.gz'))
+        map2nifti(thisDS, cwts[0]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_weights.nii.gz'))
+        map2nifti(thisDS, cwts[1]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_weights.nii.gz'))
 
-    map2nifti(thisDS, calphas[calphas.chunks==1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_alphas.nii.gz'))
-    map2nifti(thisDS, calphas[calphas.chunks==2]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_alphas.nii.gz'))
+        map2nifti(thisDS, calphas[calphas.chunks==1]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_alphas.nii.gz'))
+        map2nifti(thisDS, calphas[calphas.chunks==2]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_alphas.nii.gz'))
 
-    map2nifti(thisDS, cceil[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_ceiling.nii.gz'))
-    map2nifti(thisDS, cceil[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_ceiling.nii.gz'))
+        map2nifti(thisDS, cceil[0]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_P2L_ridge_ceiling.nii.gz'))
+        map2nifti(thisDS, cceil[1]).to_filename(
+            os.path.join(paths[0], 'Maps', 'Encoding', sub + '_' + roi + '_' + thisContrastStr + '_L2P_ridge_ceiling.nii.gz'))
     del cres, cwts, calphas, cceil
 
 
 def main(argv):
     roi = 'grayMatter'
-    thisContrast = []
+    regs = []
     debug=False
-
+    write=False
     try:
-        opts, args = getopt.getopt(argv, "dhm:c:", ["mfile=", "contrast=", "debug="])
+        opts, args = getopt.getopt(argv, "dwhm:c:", ["mfile=", "contrast=", "debug=", "write="])
     except getopt.GetoptError:
         print 'encodingAnalysisV4.py -m <maskfile> -c <contrast> '
         sys.exit(2)
@@ -167,27 +170,29 @@ def main(argv):
         elif opt in ("-m", "--mask"):
             roi = arg
         elif opt in ("-c", "--contrast"):
-            thisContrast = arg.split(',')
+            regs = arg.split(',')
         elif opt in ("-d", "--debug"):
             print "debug mode"
-            debug=True
+            debug = True
+        elif opt in ("-w", "--write"):
+            write = True
 
-    if not thisContrast:
+    if not regs:
         print "not a valid contrast... exiting"
         sys.exit(1)
     paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
-    thisContrastStr = '+'.join(thisContrast)
-    print(thisContrastStr)
-    if 'word2vec' in thisContrast:
-        thisContrast.remove('word2vec')
+    regstr = '+'.join(regs)
+    print(regstr)
+    if 'word2vec' in regs:
+        regs.remove('word2vec')
         for i in np.arange(0, 300):
-            thisContrast.append('word2vec' + str(i))
+            regs.append('word2vec' + str(i))
 
-    if 'random' in thisContrast:
-        thisContrast.remove('random')
+    if 'random' in regs:
+        regs.remove('random')
         for i in np.arange(0, 302):
-            thisContrast.append('random' + str(i))
+            regs.append('random' + str(i))
 
     sg_params = [49, 2]
     chunklen = 30  # this reflects the length of a complete trial
@@ -195,17 +200,12 @@ def main(argv):
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 
-    # ds_all = lmvpa.loadsubdata(paths, subList, m=roi, c='trial_type')
-    # motion parameters for all subjects
-    # events for beta extraction
-    # add everything as a sample attribute
-
     logging.basicConfig(level=logging.DEBUG)
     alphas = np.logspace(-1, 3, 50)
     for s in subList.keys():
-        runsub(sub=s, thisContrast=thisContrast, thisContrastStr=thisContrastStr,
+        runsub(sub=s, thisContrast=regs, thisContrastStr=regstr,
                filterLen=sg_params[0], filterOrd=sg_params[1],
-               paramEst=paramEst, chunklen=chunklen, alphas=alphas, roi=roi)
+               paramEst=paramEst, chunklen=chunklen, alphas=alphas, write=write, roi=roi)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
