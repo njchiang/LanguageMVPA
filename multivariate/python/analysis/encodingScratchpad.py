@@ -1,3 +1,4 @@
+# script so I can rapidly prototype utilities without having to go through import and setup
 import os
 from mvpa2.datasets.mri import map2nifti
 from mvpa2.mappers.zscore import zscore
@@ -5,7 +6,8 @@ import copy as cp
 import numpy as np
 import logging
 import getopt
-from nipy.modalities.fmri.design_matrix import make_dmtx
+import nipy.modalities.fmri.design_matrix as dm
+
 import sys
 # initialize stuff
 if sys.platform == 'darwin':
@@ -29,8 +31,8 @@ paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 
 sub = 'LMVPA005'
 
-thisContrast = ['ap', 'cr']
-thisContrastStr = 'ap+cr'
+thisContrast = ['ap', 'cr', 'probe']
+thisContrastStr = 'ap+cr+probe'
 roi = 'grayMatter'
 filterLen = 49
 filterOrd = 2
@@ -60,14 +62,28 @@ rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub], contrasts)  # 
 if isinstance(thisContrast, basestring):
     thisContrast = [thisContrast]
 # instead of binarizing each one, make them parametric
+hrfmodel='canonical'
 desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
-                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank'},
+                                 design_kwargs={'hrf_model': 'canonical', 'drift_model': 'blank', 'drift_order': 0},
                                  regr_attrs=None)
 desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
-                                 design_kwargs={'hrf_model': 'fir', 'fir_delays': [0, 1, 2, 3], 'drift_model': 'blank'},
+                                 design_kwargs={'hrf_model': 'spm', 'drift_model': 'blank', 'drift_order': 0},
                                  regr_attrs=None)
-# want to collapse ap and cr, but have anim separate
-desX['motion'] = make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
+desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
+                                 design_kwargs={'hrf_model': 'fir', 'fir_delays': [0,1,2,3], 'drift_order': 0,
+                                                'drift_model': 'blank'},
+                                 regr_attrs=None)
+desX, rds = lmvpa.make_designmat(rds, events, time_attr='time_coords', condition_attr=thisContrast,
+                                 design_kwargs={'hrf_model': 'None', 'drift_order': 0,
+                                                'drift_model': 'blank'},
+                                 regr_attrs=None)
 
-des = lmvpa.make_parammat(cp.copy(desX), zscore=True)
+# these two commands are identical
+desX['motion'] = dm.make_dmtx(rds.sa['time_coords'].value, paradigm=None, add_regs=mc_params[sub], drift_model='blank')
+
+# desX['motion'] = dm.DesignMatrix(matrix=mc_params[sub],
+#                                  names=['motion_0', 'motion_1', 'motion_2', 'motion_3', 'motion_4', 'motion_5'],
+#                                  frametimes=rds.sa['time_coords'].value)
+#DesignMatrix(matrix, names, frametimes)
+des = lmvpa.make_parammat(cp.copy(desX), hrf=hrfmodel, zscore=True)
 

@@ -194,8 +194,8 @@ def amendtimings(ds, b, extras=None):
     # events are loading wrong...
     theseEvents = b
     events = []
-    for i in np.arange(len(b)):
-        for ev in theseEvents[i]:
+    for i, te in enumerate(theseEvents):
+        for ev in te:
             ev['chunks'] = ds.sa['chunks'].unique[i]
             ev['onset'] += TR*idx
             # ev['targets'] = ev['condition']
@@ -203,57 +203,20 @@ def amendtimings(ds, b, extras=None):
                 ev['amplitude'] = ev['intensity']
             else:
                 ev['amplitude'] = 1
+            # add extra regressors
+            if extras is not None:
+                for k in extras.keys():
+                    if ('manualTopic' in k) or ('pcaTopic' in k) or \
+                            ('word2vec' in k) or ('random' in k):
+                        ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
             if ev['duration'] is not '0':
-                # add extra regressors
-                if extras is not None:
-                    for k in extras.keys():
-                        if 'manualTopic' in k:
-                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
-                        # add manualTopics
-                        if 'pcaTopic' in k:
-                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
-                        if 'word2vec' in k:
-                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
-                        if 'random' in k:
-                            ev[k] = extras[k][extras['trial_type'] == ev['trial_type']][0]
-                    # add PC topics
                 events.append(ev)
         if i < len(b)-1:
             idx += np.sum(ds.sa['chunks'].value == ds.sa['chunks'].unique[i])
             ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i+1]] \
                 += np.max(ds.sa.time_coords[ds.sa['chunks'].value == ds.sa['chunks'].unique[i]]) + TR
     return ds, events
-#####################################
-# regression stuff
-def testmodel(wts, des, ds, tc, use_corr=True):
-    widx = wts.sa['chunks'].unique
-    didx = ds.sa['chunks'].unique
-    if len(widx) != len(didx):
-        print "unequal number of chunks... exiting"
-        return
-    if 'word2vec' in tc:
-        tc.remove('word2vec')
-        for i in np.arange(0, 300):
-            tc.append('word2vec' + str(i))
 
-    corrs=[]
-    regidx = [des.names.index(i) for i in tc]
-    for i in np.arange(len(widx)):
-        pred = np.dot(des.matrix[:, regidx],
-                      wts[wts.sa['chunks'].value == widx[i]].samples[regidx, :])[ds.sa['chunks'].value == didx[i]]
-        Presp = ds[ds.sa['chunks'].value == didx[i]].samples
-        # Find prediction correlations
-        nnpred = np.nan_to_num(pred)
-        if use_corr:
-            vcorrs = np.nan_to_num(np.array([np.corrcoef(Presp[:, ii], nnpred[:, ii].ravel())[0, 1]
-                                            for ii in range(Presp.shape[1])]))
-        else:
-            resvar = (Presp - pred).var(0)
-            Rsqs = 1 - (resvar / Presp.var(0))
-            vcorrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
-        corrs.append(vcorrs)
-    from mvpa2.datasets import Dataset
-    return Dataset(np.vstack(corrs), sa={'chunks': ds.sa['chunks'].unique}, fa=ds.fa, a=ds.a)
 
 def events2dict(events):
     evvars = {}
@@ -266,92 +229,56 @@ def events2dict(events):
     return evvars
 
 
-def make_parammat(dm, zscore=False):
-    # assuming dm is a dict
+#####################################
+# regression stuff
+
+
+
+def condensematrix(dm, pd, names, key, hrf='canonical', op='mult'):
+    # returns condition with probe removed
+    import copy as cp
     import numpy as np
-    out=dm[dm.keys()[0]]
-    pd = []
-    names = []
-    for key in dm.keys():
-        if key == 'motion':
-            names.append('motion_0')
-            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0, 0, 0, 0])))
-            names.append('motion_1')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0])))
-            names.append('motion_2')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0])))
-            names.append('motion_3')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0])))
-            names.append('motion_4')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0])))
-            names.append('motion_5')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0])))
-        elif key == 'anim':
-            # leave anim as binary
-            names.append('inanimate')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
-            names.append('animate')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
-        elif key == 'verb': # isn't right. we need to find something that's continuous...
-            names.append('touch')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0]))) # can multiply this with the feature vector...
-            names.append('light')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0])))
-            names.append('hit')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0, 0, 0, 0])))
-            names.append('crush')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0])))
-            names.append('kiss')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0])))
-            names.append('stretch')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 1, 0, 0, 0])))
-            names.append('kick')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0])))
-            names.append('console')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0])))
-        elif key == 'stim':
-            # leave anim as binary
-            names.append('lang')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0])))
-            names.append('pic')
-            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0])))
+    delays = None
+
+    if hrf == 'fir':
+        delays=[]
+        for i in dm.names:
+            if i == 'constant':
+                delays.append('-1')
+            else:
+                delays.append(i.split('_')[i.split('_').index('delay')+1])
+        delays = np.array(delays, dtype=int)
+    idx = []
+    for i in dm.names:
+        if i == 'constant':
+            idx.append('0')
         else:
-        # take the first and last ones out
-            idx = []
-            for i in dm[key].names:
-                idx.append(i.split('_')[-1])
-            idx[-1] = 0
-            idx = np.array(idx, dtype=float)
-            # idx = np.arange(len(dm[key].names)) # need to grab the last element which will be the value
+            idx.append(i.split('_')[i.split('_').index(key)+1])
+    idx = np.array(idx, dtype=float)
 
-            # idx[0] = 0 probe is now removed i think
-            pd.append(np.dot(dm[key].matrix, idx))
-            names.append(key)
-    # don't need constant because normalized data
-    # pd.append(np.ones(np.shape(pd[-1])))
-    # names.append('constant')
-    if zscore==True:
-        out.matrix = zs(np.array(pd).T)
+    if delays is not None:
+        for d in np.arange(np.max(delays)+1):
+            outkey = key + '_delay_' + str(d)
+            outidx = idx[delays == d]
+            pd.append(np.dot(dm.matrix[:, delays==d], outidx))
+            names.append(outkey)
     else:
-        out.matrix = (np.array(pd).T)
-    out.names = names
-    return out
-
+        pd.append(np.dot(dm.matrix, idx))
+        names.append(key)
 
 
 # new make_designmat from scratch
-def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, regr_attrs=None):
+def make_designmat(ds, eorig, time_attr='time_coords', condition_attr='targets', design_kwargs=None, regr_attrs=None):
     # make glm regressors for all attributes. so loop through condition_attr and add them all...
     import copy
     from nipy.modalities.fmri.design_matrix import make_dmtx
     import numpy as np
     # Decide/device condition attribute on which GLM will actually be done
-
     if isinstance(condition_attr, basestring):
         # must be a list/tuple/array for the logic below
         condition_attr = [condition_attr]
 
-    e = copy.deepcopy(e)  # since we are modifying in place
+    e = copy.deepcopy(eorig)  # since we are modifying in place
     glm_condition_attrs=[]
     for i, con in enumerate(condition_attr):
         glm_condition_attr = 'regressors_' + str(con)
@@ -363,7 +290,6 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
                                  % (ei, glm_condition_attr))
             ei[glm_condition_attr] = \
                 'glm_label_' + str(con) + '_' + '+'.join(str(ei[c]) for c in [con])
-                # 'glm_label_' + str(con) + '+'.join(str(ei[c]) for c in [con, 'chunks'])
 
     evvars = events2dict(e)
     add_paradigm_kwargs = {}
@@ -371,7 +297,7 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
         add_paradigm_kwargs['amplitude'] = evvars['amplitude']
     if design_kwargs is None:
         design_kwargs = {}
-    if not regr_attrs is None:
+    if regr_attrs is not None:
         names = []
         regrs = []
         for attr in regr_attrs:
@@ -432,6 +358,164 @@ def make_designmat(ds, e, time_attr, condition_attr='targets', design_kwargs=Non
     #         ds.sa['glm_label_chunks' + str(i)] = np.array(ds.sa['chunks'].value == i, dtype=np.int)
     return X, ds
 
+
+def make_parammat(dm, hrf='canonical', zscore=False):
+    # remove anything with a 0 and include probe as a feature
+    # assuming dm is a dict
+    import numpy as np
+    out = dm[dm.keys()[0]]
+    pd = []
+    names = []
+    for key in dm.keys():
+        if key == 'motion':
+            names.append('motion_0')
+            pd.append(np.dot(dm[key].matrix, np.array([1, 0, 0, 0, 0, 0, 0])))
+            names.append('motion_1')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 1, 0, 0, 0, 0, 0])))
+            names.append('motion_2')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 1, 0, 0, 0, 0])))
+            names.append('motion_3')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 1, 0, 0, 0])))
+            names.append('motion_4')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 1, 0, 0])))
+            names.append('motion_5')
+            pd.append(np.dot(dm[key].matrix, np.array([0, 0, 0, 0, 0, 1, 0])))
+        # hardcode stim and verb
+        else:
+            condensematrix(dm[key], pd, names, key, hrf, op='mult')
+    # don't need constant because normalized data
+    # pd.append(np.ones(np.shape(pd[-1])))
+    # names.append('constant')
+    if zscore==True:
+        out.matrix = zs(np.array(pd).T)
+    else:
+        out.matrix = (np.array(pd).T)
+    out.names = names
+    return out
+
+
+
+
+
+
+def testmodel(wts, des, ds, tc, use_corr=True):
+    import numpy as np
+    widx = wts.sa['chunks'].unique
+    didx = ds.sa['chunks'].unique
+    if len(widx) != len(didx):
+        print "unequal number of chunks... exiting"
+        return
+    if 'word2vec' in tc:
+        tc.remove('word2vec')
+        for i in np.arange(0, 300):
+            tc.append('word2vec' + str(i))
+
+    corrs=[]
+    regidx = [des.names.index(i) for i in tc]
+    for i in np.arange(len(widx)):
+        pred = np.dot(des.matrix[:, regidx],
+                      wts[wts.sa['chunks'].value == widx[i]].samples[regidx, :])[ds.sa['chunks'].value == didx[i]]
+        Presp = ds[ds.sa['chunks'].value == didx[i]].samples
+        # Find prediction correlations
+        nnpred = np.nan_to_num(pred)
+        if use_corr:
+            vcorrs = np.nan_to_num(np.array([np.corrcoef(Presp[:, ii], nnpred[:, ii].ravel())[0, 1]
+                                            for ii in range(Presp.shape[1])]))
+        else:
+            resvar = (Presp - pred).var(0)
+            Rsqs = 1 - (resvar / Presp.var(0))
+            vcorrs = np.sqrt(np.abs(Rsqs)) * np.sign(Rsqs)
+        corrs.append(vcorrs)
+    from mvpa2.datasets import Dataset
+    return Dataset(np.vstack(corrs), sa={'chunks': ds.sa['chunks'].unique}, fa=ds.fa, a=ds.a)
+
+
+def corrsig(N, c=None, p=.95):
+    # if c exists, this returns the cutoff
+    import numpy as np
+    from scipy.stats import t
+    if not c is None:
+        return t.cdf(c/np.sqrt((1-c**2)/(N-2)), N-2)
+    else:
+        print "functionality not implemented yet, please query a correlation"
+        return
+        # tsigsq=t.ppf(p, N-2)**2
+        # a = tsigsq+N-2
+        # return np.sqrt(2*a)/(2*a)
+
+######################################
+# classification
+def makebinarymodel(l):
+    import numpy as np
+    m = np.zeros([len(l), len(l)])
+    for i in np.unique(l):
+        m1 = m.copy()
+        m2 = m.copy()
+        m1[l == i, :] = 1
+        m2[:, l == i] = 1
+        m = m1*m2
+    return 1-m
+
+
+
+def testsg(ds, w, p, voxIdx, c='chunks'):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from scipy.signal import savgol_filter
+    from mvpa2.mappers.detrend import poly_detrend
+    import SavGolFilter as sg
+    poly0 = ds.copy(deep=False)
+    poly1 = ds.copy(deep=False)
+    poly2 = ds.copy(deep=False)
+    t = np.arange(ds.shape[0])
+    poly_detrend(poly0, polyord=0, chunks_attr=c)
+    sgFilt = ds.copy(deep=False)
+    manualSet = ds.copy(deep=False)
+    manual = getSGDrift(manualSet, w, p)
+    # filterMe = filterMat[:,voxIdx]
+    # manual = savgol_filter(filterMe, w, p, axis=0)
+    # AXIS SHOULD BE 0
+    # manualMat = savgol_filter(filterMat, w, p, axis=0)
+    poly_detrend(poly1, polyord=1, chunks_attr=c)
+    poly_detrend(poly2, polyord=2, chunks_attr=c)
+    # sgFilt = savgol_filter(sgFilt, w, p, axis=0)
+    sg.sg_filter(sgFilt, window_length=w, polyorder=p, chunks_attr=c, axis=0)
+    plt.plot(t, poly0.samples[:, voxIdx], 'k', label='demean')
+    plt.plot(t, poly1.samples[:, voxIdx], 'b+', label='linear')
+    plt.plot(t, poly2.samples[:, voxIdx], 'b*', label='quadratic')
+    plt.plot(t, sgFilt.samples[:, voxIdx], 'go', label='sg')
+    plt.plot(t, manual[:, voxIdx], 'r+', label='sg estimate')
+    plt.legend(loc='upper left')
+    plt.show()
+
+
+def getSGDrift(d, w, p, chunks_attr='chunks'):
+    import numpy as np
+    if chunks_attr is None:
+        reg = sgfilter(d.copy(deep=False), w, p) - np.mean(ds, axis=0)
+    else:
+        uchunks = d.sa[chunks_attr].unique
+        reg = []
+        for n, chunk in enumerate(uchunks):
+            cinds = d.sa[chunks_attr].value == chunk
+            thisreg = sgfilter(d[cinds].copy(deep=False), w, p) - np.mean(d[cinds], axis=0)
+            reg.append(thisreg)
+        reg = np.vstack(reg)
+
+    # combine the regs (time x reg)
+    # self._regs = np.hstack(reg)
+    return np.array(reg)
+
+
+def sgfilter(data, w, p):
+    from scipy.signal import savgol_filter
+    mapped = savgol_filter(data.samples, w, p, axis=0)
+    return mapped
+######################################
+
+
+"""
+ignore
 
 def make_fulldesignmat(ds, e, time_attr, condition_attr='targets', design_kwargs=None, glmfit_kwargs=None, regr_attrs=None):
     # for now... loop through this and feed in one event at a time.
@@ -521,85 +605,4 @@ def make_fulldesignmat(ds, e, time_attr, condition_attr='targets', design_kwargs
     #     ds.sa.pop(con)
     return X, ds
 
-def corrsig(N, c=None, p=.95):
-    # if c exists, this returns the cutoff
-    import numpy as np
-    from scipy.stats import t
-    if not c is None:
-        return t.cdf(c/np.sqrt((1-c**2)/(N-2)), N-2)
-    else:
-        print "functionality not implemented yet, please query a correlation"
-        return
-        # tsigsq=t.ppf(p, N-2)**2
-        # a = tsigsq+N-2
-        # return np.sqrt(2*a)/(2*a)
-
-######################################
-# classification
-def makebinarymodel(l):
-    import numpy as np
-    m = np.zeros([len(l), len(l)])
-    for i in np.unique(l):
-        m1 = m.copy()
-        m2 = m.copy()
-        m1[l == i, :] = 1
-        m2[:, l == i] = 1
-        m = m1*m2
-    return 1-m
-
-
-
-def testsg(ds, w, p, voxIdx, c='chunks'):
-    import matplotlib.pyplot as plt
-    import numpy as np
-    from scipy.signal import savgol_filter
-    from mvpa2.mappers.detrend import poly_detrend
-    import SavGolFilter as sg
-    poly0 = ds.copy(deep=False)
-    poly1 = ds.copy(deep=False)
-    poly2 = ds.copy(deep=False)
-    t = np.arange(ds.shape[0])
-    poly_detrend(poly0, polyord=0, chunks_attr=c)
-    sgFilt = ds.copy(deep=False)
-    manualSet = ds.copy(deep=False)
-    manual = getSGDrift(manualSet, w, p)
-    # filterMe = filterMat[:,voxIdx]
-    # manual = savgol_filter(filterMe, w, p, axis=0)
-    # AXIS SHOULD BE 0
-    # manualMat = savgol_filter(filterMat, w, p, axis=0)
-    poly_detrend(poly1, polyord=1, chunks_attr=c)
-    poly_detrend(poly2, polyord=2, chunks_attr=c)
-    # sgFilt = savgol_filter(sgFilt, w, p, axis=0)
-    sg.sg_filter(sgFilt, window_length=w, polyorder=p, chunks_attr=c, axis=0)
-    plt.plot(t, poly0.samples[:, voxIdx], 'k', label='demean')
-    plt.plot(t, poly1.samples[:, voxIdx], 'b+', label='linear')
-    plt.plot(t, poly2.samples[:, voxIdx], 'b*', label='quadratic')
-    plt.plot(t, sgFilt.samples[:, voxIdx], 'go', label='sg')
-    plt.plot(t, manual[:, voxIdx], 'r+', label='sg estimate')
-    plt.legend(loc='upper left')
-    plt.show()
-
-
-def getSGDrift(d, w, p, chunks_attr='chunks'):
-    import numpy as np
-    if chunks_attr is None:
-        reg = sgfilter(d.copy(deep=False), w, p) - np.mean(ds, axis=0)
-    else:
-        uchunks = d.sa[chunks_attr].unique
-        reg = []
-        for n, chunk in enumerate(uchunks):
-            cinds = d.sa[chunks_attr].value == chunk
-            thisreg = sgfilter(d[cinds].copy(deep=False), w, p) - np.mean(d[cinds], axis=0)
-            reg.append(thisreg)
-        reg = np.vstack(reg)
-
-    # combine the regs (time x reg)
-    # self._regs = np.hstack(reg)
-    return np.array(reg)
-
-
-def sgfilter(data, w, p):
-    from scipy.signal import savgol_filter
-    mapped = savgol_filter(data.samples, w, p, axis=0)
-    return mapped
-######################################
+"""
