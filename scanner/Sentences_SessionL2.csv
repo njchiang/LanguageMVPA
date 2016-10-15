@@ -1,0 +1,8 @@
+The guitarist was kissed by the singer.,1,Illustrations/l_Kiss_Touch_Anim_Pass_Can.jpg,0,Sentence,1,2,1,2,1,1,Touch,s_Kiss_Touch_Anim_Pass_Can,Do both participants sing?,5,10,1,Patient
+Here's the gravy that touched the broccoli.,1,Illustrations/l_Touch_Touch_Inanim_Act_Rel.jpg,0,Sentence,2,1,2,3,2,1,Touch,s_Touch_Touch_Inanim_Act_Rel,+,0,0,,0
+Here's the referee who was kicked by the goalie.,1,Illustrations/l_Kick_Impact_Anim_Pass_Rel.jpg,0,Sentence,3,2,2,4,1,2,Contact by impact,s_Kick_Impact_Anim_Pass_Rel,Was the victim a teammate?,5,10,2,Patient
+The bus hit the truck.,1,Illustrations/l_Hit_Impact_Inanim_Act_Can.jpg,0,Sentence,4,1,1,1,2,2,Contact by impact,s_Hit_Impact_Inanim_Act_Can,Was something impacted?,5,10,1,Patient
+The woman consoled the man. ,1,Illustrations/l_Console_Psych_Anim_Act_Can.jpg,0,Sentence,5,1,1,1,1,3,Psych verb,s_Console_Psych_Anim_Act_Can,+,0,0,,0
+Here's the car that was crushed by the tree.,1,Illustrations/l_Crush_Psych_Inanim_Pass_Rel.jpg,0,Sentence,6,2,2,4,2,3,Psych verb,s_Crush_Psych_Inanim_Pass_Rel,Was someone reading?,5,10,1,Event
+Here's the trainer who stretched the dancer.,1,Illustrations/l_Stretch_ChState_Anim_Act_Rel.jpg,0,Sentence,7,1,2,3,1,4,Change of state,s_Stretch_ChState_Anim_Act_Rel,Does one participant move gracefully?,5,10,1,Patient
+The match was lit by the candle.,1,Illustrations/l_Light_ChState_Inanim_Pass_Can.jpg,0,Sentence,8,2,1,2,2,4,Change of state,s_Light_ChState_Inanim_Pass_Can,Did something crack?,5,10,2,Event

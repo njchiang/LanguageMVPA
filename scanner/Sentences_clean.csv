@@ -1,0 +1,32 @@
+The singer kissed the guitarist.,1,NewStimuli/Illustrations/l_Kiss_Touch_Anim_Act_Can.png,0,Sentence,1,1,1,1,1,1,Touch,s_Kiss_Touch_Anim_Act_Can,Was there a microphone?,5,10,2,Agent
+The guitarist was kissed by the singer.,1,NewStimuli/Illustrations/l_Kiss_Touch_Anim_Pass_Can.png,0,Sentence,1,2,1,2,1,1,Touch,s_Kiss_Touch_Anim_Pass_Can,Do both participants sing?,5,10,1,Patient
+Here's the singer who kissed the  guitarist.,1,NewStimuli/Illustrations/l_Kiss_Touch_Anim_Act_Rel.png,0,Sentence,1,1,2,3,1,1,Touch,s_Kiss_Touch_Anim_Act_Rel,+,0,0,,0
+Here's the guitarist who was kissed by the singer.,1,NewStimuli/Illustrations/l_Kiss_Touch_Anim_Pass_Rel.png,0,Sentence,1,2,2,4,1,1,Touch,s_Kiss_Touch_Anim_Pass_Rel,Was there display of affection?,5,10,2,Event
+The gravy touched the broccoli. ,1,NewStimuli/Illustrations/l_Touch_Touch_Inanim_Act_Can.png,0,Sentence,2,1,1,1,2,1,Touch,s_Touch_Touch_Inanim_Act_Can,Was a sport being playd?,5,10,2,Event
+The broccoli was touched by the gravy.,1,NewStimuli/Illustrations/l_Touch_Touch_Inanim_Pass_Can.png,0,Sentence,2,2,1,2,2,1,Touch,s_Touch_Touch_Inanim_Pass_Can,Was the vegetable red?,5,10,2,Patient
+Here's the gravy that touched the broccoli.,1,NewStimuli/Illustrations/l_Touch_Touch_Inanim_Act_Rel.png,0,Sentence,2,1,2,3,2,1,Touch,s_Touch_Touch_Inanim_Act_Rel,+,0,0,,0
+Here's the broccoli that was touched by the gravy.,1,NewStimuli/Illustrations/l_Touch_Touch_Inanim_Pass_Rel.png,0,Sentence,2,2,2,4,2,1,Touch,s_Touch_Touch_Inanim_Pass_Rel,Was one participant a sauce?,5,10,1,Agent
+The goalie kicked the referee.,1,NewStimuli/Illustrations/l_Kick_Impact_Anim_Act_Can.png,0,Sentence,3,1,1,1,1,2,Contact by impact,s_Kick_Impact_Anim_Act_Can,Was there an athlete?,5,10,1,Agent
+The referee was kicked by the goalie.,1,NewStimuli/Illustrations/l_Kick_Impact_Anim_Pass_Can.png,0,Sentence,3,2,1,2,1,2,Contact by impact,s_Kick_Impact_Anim_Pass_Can,+,0,0,,0
+Here's the goalie who kicked the referee.,1,NewStimuli/Illustrations/l_Kick_Impact_Anim_Act_Rel.png,0,Sentence,3,1,2,3,1,2,Contact by impact,s_Kick_Impact_Anim_Act_Rel,Was there singing?,5,10,2,Event
+Here's the referee who was kicked by the goalie.,1,NewStimuli/Illustrations/l_Kick_Impact_Anim_Pass_Rel.png,0,Sentence,3,2,2,4,1,2,Contact by impact,s_Kick_Impact_Anim_Pass_Rel,Was the victim a teammate?,5,10,2,Patient
+The bus hit the truck.,1,NewStimuli/Illustrations/l_Hit_Impact_Inanim_Act_Can.png,0,Sentence,4,1,1,1,2,2,Contact by impact,s_Hit_Impact_Inanim_Act_Can,Was something impacted?,5,10,1,Patient
+The truck was hit by the bus.,1,NewStimuli/Illustrations/l_Hit_Impact_Inanim_Pass_Can.png,0,Sentence,4,2,1,2,2,2,Contact by impact,s_Hit_Impact_Inanim_Pass_Can,Was there playing?,5,10,1,Event
+Here's the bus that hit the truck.,1,NewStimuli/Illustrations/l_Hit_Impact_Inanim_Act_Rel.png,0,Sentence,4,1,2,3,2,2,Contact by impact,s_Hit_Impact_Inanim_Act_Rel,+,0,0,,0
+Here's the truck that was hit by the bus.,1,NewStimuli/Illustrations/l_Hit_Impact_Inanim_Pass_Rel.png,0,Sentence,4,2,2,4,2,2,Contact by impact,s_Hit_Impact_Inanim_Pass_Rel,Was the cause of the accident a bicycle?,5,10,2,Agent
+The woman consoled the man. ,1,NewStimuli/Illustrations/l_Console_Psych_Anim_Act_Can.png,0,Sentence,5,1,1,1,1,3,Psych verb,s_Console_Psych_Anim_Act_Can,+,0,0,,0
+The man was consoled by the woman.,1,NewStimuli/Illustrations/l_Console_Psych_Anim_Pass_Can.png,0,Sentence,5,2,1,2,1,3,Psych verb,s_Console_Psych_Anim_Pass_Can,Were both participants male?,5,10,1,Agent
+Here's the woman who consoled the man.,1,NewStimuli/Illustrations/l_Console_Psych_Anim_Act_Rel.png,0,Sentence,5,1,2,3,1,3,Psych verb,s_Console_Psych_Anim_Act_Rel,Did someone try to help?,5,10,1,Event
+Here's the man who was consoled by the woman.,1,NewStimuli/Illustrations/l_Console_Psych_Anim_Pass_Rel.png,0,Sentence,5,2,2,4,1,3,Psych verb,s_Console_Psych_Anim_Pass_Rel,Was one participant sad?,5,10,2,Patient
+The tree crushed the car.,1,NewStimuli/Illustrations/l_Crush_Psych_Inanim_Act_Can.png,0,Sentence,6,1,1,1,2,3,Psych verb,s_Crush_Psych_Inanim_Act_Can,Was something badly damaged?,5,10,2,Patient
+The car was crushed by the tree.,1,NewStimuli/Illustrations/l_Crush_Psych_Inanim_Pass_Can.png,0,Sentence,6,2,1,2,2,3,Psych verb,s_Crush_Psych_Inanim_Pass_Can,+,0,0,,0
+Here's the tree that crushed the car.,1,NewStimuli/Illustrations/l_Crush_Psych_Inanim_Act_Rel.png,0,Sentence,6,1,2,3,2,3,Psych verb,s_Crush_Psych_Inanim_Act_Rel,Did something have roots?,5,10,1,Agent
+Here's the car that was crushed by the tree.,1,NewStimuli/Illustrations/l_Crush_Psych_Inanim_Pass_Rel.png,0,Sentence,6,2,2,4,2,3,Psych verb,s_Crush_Psych_Inanim_Pass_Rel,Was someone reading?,5,10,1,Event
+The trainer stretched the dancer.,1,NewStimuli/Illustrations/l_Stretch_ChState_Anim_Act_Can.png,0,Sentence,7,1,1,1,1,4,Change of state,s_Stretch_ChState_Anim_Act_Can,Was there disagreement?,5,10,1,Event
+The dancer was stretched by the trainer.,1,NewStimuli/Illustrations/l_Stretch_ChState_Anim_Pass_Can.png,0,Sentence,7,2,1,2,1,4,Change of state,s_Stretch_ChState_Anim_Pass_Can,Was someone helpful?,5,10,2,Agent
+Here's the trainer who stretched the dancer.,1,NewStimuli/Illustrations/l_Stretch_ChState_Anim_Act_Rel.png,0,Sentence,7,1,2,3,1,4,Change of state,s_Stretch_ChState_Anim_Act_Rel,Does one participant move gracefully?,5,10,1,Patient
+Here's the dancer who was stretched by the trainer.,1,NewStimuli/Illustrations/l_Stretch_ChState_Anim_Pass_Rel.png,0,Sentence,7,2,2,4,1,4,Change of state,s_Stretch_ChState_Anim_Pass_Rel,+,0,0,,0
+The candle lit the match.,1,NewStimuli/Illustrations/l_Light_ChState_Inanim_Act_Can.png,0,Sentence,8,1,1,1,2,4,Change of state,s_Light_ChState_Inanim_Act_Can,+,0,0,,0
+The match was lit by the candle.,1,NewStimuli/Illustrations/l_Light_ChState_Inanim_Pass_Can.png,0,Sentence,8,2,1,2,2,4,Change of state,s_Light_ChState_Inanim_Pass_Can,Did something crack?,5,10,2,Event
+Here's the candle that lit the match.,1,NewStimuli/Illustrations/l_Light_ChState_Inanim_Act_Rel.png,0,Sentence,8,1,2,3,2,4,Change of state,s_Light_ChState_Inanim_Act_Rel,Is one object smaller than the other?,5,10,2,Agent
+Here's the match that was lit by the candle.,1,NewStimuli/Illustrations/l_Light_ChState_Inanim_Pass_Rel.png,0,Sentence,8,2,2,4,2,4,Change of state,s_Light_ChState_Inanim_Pass_Rel,Are both things made of wood?,5,10,1,Patient
