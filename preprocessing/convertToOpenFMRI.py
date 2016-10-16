@@ -22,6 +22,21 @@ def writesubrun(f):
             ofile.write(resp[3] + '\t' + resp[4] + '\t1\t' + 'probe' + '\t' + addcondid('probe') + '\n')
     ofile.close()
 
+def writeproberegressor(f):
+    sub = 'LMVPA' + str(f.split('_')[0])
+    run = 'Run' + str(int(f.split('_')[1]))
+    subData[sub].append(run)
+    fullfile = np.loadtxt(os.path.join(projectDir, 'from_scanner', f), dtype=str, skiprows=1)
+    ofile = open(os.path.join(projectDir, 'regressor', sub, 'rev', sub + '_' + run + '_probe.txt'), "w")
+    for line in fullfile:
+        resp = line.split(',')
+        # ofile.write(resp[1] + ' ' + resp[2] + ' 1\n')
+        if (resp[-1] == '') or (resp[-1] == 'None') or (resp[-1] == '0') or (resp[-1] == 0):
+            ofile.write(resp[3] + ' ' + resp[4] + ' 0\n')
+        else:
+            ofile.write(resp[3] + ' ' + resp[4] + ' 1\n')
+    ofile.close()
+
 
 def addcondid(st):
     if st is not None:
@@ -50,3 +65,4 @@ projectDir = os.path.join(rootDir, 'fmri', 'LanguageMVPA')
 fnames = os.listdir(os.path.join(projectDir, 'from_scanner'))
 subData = defaultdict(list)
 [writesubrun(f) for f in fnames]
+[writeproberegressor(f) for f in fnames]
