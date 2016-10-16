@@ -8,6 +8,8 @@ then...
 todo: add ridge regression, maybe try crossmodal classification"""
 # initialize stuff
 import sys
+import getopt
+
 # initialize stuff
 if sys.platform == 'darwin':
     plat = 'usb'
@@ -80,11 +82,13 @@ def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, de
 
     lres = sl.run_cv_sl(cvSL, fds[lidx].copy(deep=False))
     pres = sl.run_cv_sl(cvSL, fds[pidx].copy(deep=False))
-    from mvpa2.base import dataset
-    map2nifti(thisDS, dataset.vstack([lres, pres])).\
-        to_filename(os.path.join(
-                    paths[0], 'Maps', 'PyMVPA',
-                    sub + '_' + roi + '_' + thisContrast + '_cvsl.nii.gz'))
+
+    if write:
+        from mvpa2.base import dataset
+        map2nifti(thisDS, dataset.vstack([lres, pres])).\
+            to_filename(os.path.join(
+                        paths[0], 'Maps', 'PyMVPA',
+                        sub + '_' + roi + '_' + thisContrast + '_cvsl.nii.gz'))
 
     del lres, pres, cvSL
 
@@ -93,51 +97,47 @@ def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, de
     crossSet.chunks[lidx] = 1
     crossSet.chunks[pidx] = 2
     cres = sl.run_cv_sl(cvSL, crossSet.copy(deep=False))
-    map2nifti(thisDS, cres[0]).to_filename(
-        os.path.join(paths[0], 'Maps', 'PyMVPA',
-                     sub + '_' + roi + '_' + (thisContrast) + '_P2L.nii.gz'))
-    map2nifti(thisDS, cres[1]).to_filename(
-        os.path.join(paths[0], 'Maps', 'PyMVPA',
-                     sub + '_' + roi + '_' + (thisContrast) + '_L2P.nii.gz'))
+    if write:
+        map2nifti(thisDS, cres[0]).to_filename(
+            os.path.join(paths[0], 'Maps', 'PyMVPA',
+                         sub + '_' + roi + '_' + (thisContrast) + '_P2L.nii.gz'))
+        map2nifti(thisDS, cres[1]).to_filename(
+            os.path.join(paths[0], 'Maps', 'PyMVPA',
+                         sub + '_' + roi + '_' + (thisContrast) + '_L2P.nii.gz'))
 
 
 
 def main(argv):
     roi = 'grayMatter'
-    thisContrast = []
+    thisContrast = None
     debug=False
     write=False
-    thisContrast = 'CR'
     roi = 'grayMatter'
     filterLen = 49
     filterOrd = 3
     r = 4  # searchlight radius
     try:
-        opts, args = getopt.getopt(argv, "dwhm:c:t:a", ["mfile=", "contrast=", "test=", "alpha=", "debug="])
+        opts, args = getopt.getopt(argv, "dwhm:c:r", ["mfile=", "contrast=", "debug="])
     except getopt.GetoptError:
-        print 'encodingAnalysisV5.py -m <maskfile> -c <contrast> -t <testcontrasts> -a <alphas>'
+        print 'searchlight.py -m <maskfile> -c <contrast> '
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print 'encodingAnalysisV5.py -m <maskfile> -c <contrast> -t <testcontrasts> -a <alphas> '
+            print 'searchlight.py -m <maskfile> -c <contrast>  '
             sys.exit()
         elif opt in ("-m", "--mask"):
             roi = arg
         # elif opt in ("-n", "--niter"):
         #     n = arg
         elif opt in ("-c", "--contrast"):
-            thisContrast = arg.split(',')
-        elif opt in ("-t", "--test"):
-            tmp = arg.split(',')
-            testContrast.append(tmp)
-        elif opt in ("-a", "--alpha"):
-            tmp = arg.split(',')
-            alphas = [float(i) for i in tmp]
+            thisContrast = arg
         elif opt in ("-d", "--debug"):
             print "debug mode"
             debug = True
         elif opt in ("-w", "--write"):
             write = True
+        elif opt in ("-r", "--radius"):
+            r = arg
 
     if not thisContrast:
         print "not a valid contrast... exiting"
@@ -146,27 +146,14 @@ def main(argv):
     paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
     print "Mask: " + str(roi)
     print "Full Model: " + str(thisContrast)
-    print "Model test: " + str(testContrast)
-    print "Alphas: " + str(alphas)
-
-    thisContrastStr = '+'.join(thisContrast)
-    print(thisContrastStr)
-    if 'word2vec' in thisContrast:
-        thisContrast.remove('word2vec')
-        for i in np.arange(0, 300):
-            thisContrast.append('word2vec' + str(i))
-
-    if 'random' in thisContrast:
-        thisContrast.remove('random')
-        for i in np.arange(0, 302):
-            thisContrast.append('random' + str(i))
-
+    print "Searchlight Radius: " + str(r)
+    print "Write results: " + str(write)
     sg_params = [49, 2]
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 
     for s in subList.keys():
-        runsub(sub=s, thisContrast=thisContrast, debug=debug, write=write,
+        runsub(sub=s, thisContrast=thisContrast, r=r, debug=debug, write=write,
                 filterLen=sg_params[0], filterOrd=sg_params[1], roi=roi)
 
 if __name__ == "__main__":
