@@ -17,6 +17,7 @@ doc
 RETURNHERE=${PWD}
 
 CHANCE=0
+OVERRIDE=FALSE
 while [[ $# -gt 1 ]]
 do
 key="$1"
@@ -36,6 +37,10 @@ case $key in
     ;;
 	-c|--chance)
     CHANCE="$2"
+    shift # past argument
+    ;;
+	-o|--override)
+    OVERRIDE=TRUE
     shift # past argument
     ;;
     *)
@@ -64,7 +69,7 @@ echo "FILE PATH  = ${RESPATH}"
 echo "MODEL     = ${MODEL}"
 echo "MASK    = ${MASK}"
 echo "CHANCE    = ${CHANCE}"
-
+echo "OVERRIDE  = ${OVERRIDE}"
 projectDir=${ROOTDIR}/fmri/LanguageMVPA
 desDir=${HOMEDIR}/GitHub/LanguageMVPA/multivariate/bash
 refImage=${projectDir}/MNI152_T1_3mm_brain.nii.gz
@@ -73,7 +78,7 @@ targetDir=${projectDir}/${RESPATH}
 
 cd ${targetDir}
 
-if [ ! -f ${MASK}_${MODEL}_Group.nii.gz ]
+if [ ! -f ${MASK}_${MODEL}_Group.nii.gz ] || [ $OVERRIDE == "TRUE" ]
 then
 	echo "Moving files"
 	#move raw outputs

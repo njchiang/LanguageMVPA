@@ -25,17 +25,10 @@ from sklearn import linear_model as lm
 from mvpa2.clfs.skl import SKLLearnerAdapter
 from mvpa2.clfs import svm
 # debug = True
-thisContrast = 'verb'
-roi = 'grayMatter'
-filterLen = 49
-filterOrd = 3
-r = 4 #searchlight radius
-clf = svm.LinearNuSVMC()
+
 paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
 if debug:
     subList = {'LMVPA005': subList['LMVPA005']}
-mc_params = lmvpa.loadmotionparams(paths, subList)
-beta_events = lmvpa.loadevents(paths, subList)
 
 import numpy as np
 import os
@@ -47,7 +40,8 @@ from mvpa2.measures.base import CrossValidation
 from mvpa2.generators.partition import NFoldPartitioner
 import searchlightutils as sl
 
-for sub in subList.keys():
+# for sub in subList.keys():
+def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, debug=False, write=False):
     thisSub = {sub: subList[sub]}
     dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
     thisDS = dsdict[sub]
@@ -74,6 +68,7 @@ for sub in subList.keys():
 
     print "searchlights"
     ## initialize classifier
+    clf = svm.LinearNuSVMC()
     cv = CrossValidation(clf, NFoldPartitioner())
     from mvpa2.measures.searchlight import sphere_searchlight
     cvSL = sphere_searchlight(cv, radius=r)
@@ -105,3 +100,74 @@ for sub in subList.keys():
         os.path.join(paths[0], 'Maps', 'PyMVPA',
                      sub + '_' + roi + '_' + (thisContrast) + '_L2P.nii.gz'))
 
+
+
+def main(argv):
+    roi = 'grayMatter'
+    thisContrast = []
+    debug=False
+    write=False
+    thisContrast = 'CR'
+    roi = 'grayMatter'
+    filterLen = 49
+    filterOrd = 3
+    r = 4  # searchlight radius
+    try:
+        opts, args = getopt.getopt(argv, "dwhm:c:t:a", ["mfile=", "contrast=", "test=", "alpha=", "debug="])
+    except getopt.GetoptError:
+        print 'encodingAnalysisV5.py -m <maskfile> -c <contrast> -t <testcontrasts> -a <alphas>'
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print 'encodingAnalysisV5.py -m <maskfile> -c <contrast> -t <testcontrasts> -a <alphas> '
+            sys.exit()
+        elif opt in ("-m", "--mask"):
+            roi = arg
+        # elif opt in ("-n", "--niter"):
+        #     n = arg
+        elif opt in ("-c", "--contrast"):
+            thisContrast = arg.split(',')
+        elif opt in ("-t", "--test"):
+            tmp = arg.split(',')
+            testContrast.append(tmp)
+        elif opt in ("-a", "--alpha"):
+            tmp = arg.split(',')
+            alphas = [float(i) for i in tmp]
+        elif opt in ("-d", "--debug"):
+            print "debug mode"
+            debug = True
+        elif opt in ("-w", "--write"):
+            write = True
+
+    if not thisContrast:
+        print "not a valid contrast... exiting"
+        sys.exit(1)
+
+    paths, subList, contrasts, maskList = lmvpa.initpaths(plat)
+    print "Mask: " + str(roi)
+    print "Full Model: " + str(thisContrast)
+    print "Model test: " + str(testContrast)
+    print "Alphas: " + str(alphas)
+
+    thisContrastStr = '+'.join(thisContrast)
+    print(thisContrastStr)
+    if 'word2vec' in thisContrast:
+        thisContrast.remove('word2vec')
+        for i in np.arange(0, 300):
+            thisContrast.append('word2vec' + str(i))
+
+    if 'random' in thisContrast:
+        thisContrast.remove('random')
+        for i in np.arange(0, 302):
+            thisContrast.append('random' + str(i))
+
+    sg_params = [49, 2]
+    if debug:
+        subList = {'LMVPA005': subList['LMVPA005']}
+
+    for s in subList.keys():
+        runsub(sub=s, thisContrast=thisContrast, debug=debug, write=write,
+                filterLen=sg_params[0], filterOrd=sg_params[1], roi=roi)
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
