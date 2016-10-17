@@ -81,21 +81,23 @@ def initpaths(platform):
 
 ######################################
 # load data
-def loadsubbetas(p, s, m="grayMatter", a=0):
+def loadsubbetas(p, s, btype='tstat', m="grayMatter"):
     # load subject data with paths list, s: sub, c: contrast, m: mask
     print s
     import os
-    bsn = str(s + "_LSA_Series.nii.gz")
-    bsp = os.path.join(p[0], "betas", "tstat")
+    bsp = os.path.join(p[0], "data", s, "func")
+    bsn = str(s + "_LSS_" + btype + ".nii.gz")
     bs = os.path.join(bsp, bsn)
     mnp = os.path.join(p[0], "data", s, "masks")
-    mn = str(s+"_"+m+".nii.gz")
+    mn = str(s + "_" + m + ".nii.gz")
     mf = os.path.join(mnp, mn)
     from mvpa2.datasets.mri import fmri_dataset
-    if a != 0:
-        return fmri_dataset(samples=bs, targets=a.targets, chunks=a.chunks, mask=mf)
-    else:
-        return fmri_dataset(samples=bs, mask=mf)
+    fds = fmri_dataset(samples=bs, mask=mf)
+    import pandas as pd
+    attrs = pd.read_csv(os.path.join(bsp, str(s+"_betas.tsv")), sep='\t')
+    for c in attrs.keys():
+        fds.sa[c] = attrs[c]
+    return fds
 
 
 def loadrundata(p, s, r, m=None, c='trial_type'):
