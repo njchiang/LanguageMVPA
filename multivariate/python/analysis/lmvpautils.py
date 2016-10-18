@@ -94,9 +94,10 @@ def loadsubbetas(p, s, btype='tstat', m="grayMatter"):
     from mvpa2.datasets.mri import fmri_dataset
     fds = fmri_dataset(samples=bs, mask=mf)
     import pandas as pd
-    attrs = pd.read_csv(os.path.join(bsp, str(s+"_betas.tsv")), sep='\t')
+    attrs = pd.read_csv(os.path.join(bsp, str(s+"_LSS_betas.tsv")), sep='\t')
+    fds.sa['chunks'] = attrs['run'].tolist()
     for c in attrs.keys():
-        fds.sa[c] = attrs[c]
+        fds.sa[c] = attrs[c].tolist()
     return fds
 
 

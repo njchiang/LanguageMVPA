@@ -43,30 +43,40 @@ from mvpa2.generators.partition import NFoldPartitioner
 import searchlightutils as sl
 
 # for sub in subList.keys():
-def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, debug=False, write=False):
-    thisSub = {sub: subList[sub]}
-    dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
-    thisDS = dsdict[sub]
-    mc_params = lmvpa.loadmotionparams(paths, thisSub)
-    beta_events = lmvpa.loadevents(paths, thisSub)
-    # savitsky golay filtering
-    sg.sg_filter(thisDS, filterLen, filterOrd)
-    # gallant group zscores before regression.
+def runsub(sub, thisContrast, r, dstype='raw', roi='grayMatter', filterLen=49, filterOrd=3, write=False):
 
-    # zscore w.r.t. rest trials
-    # zscore(thisDS, param_est=('targets', ['rest']), chunks_attr='chunks')
-    # zscore entire set. if done chunk-wise, there is no double-dipping (since we leave a chunk out at a time).
-    zscore(thisDS, chunks_attr='chunks')
-    print "beta extraction"
-    ## BETA EXTRACTION ##
-    rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
-    evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
-                                  condition_attr=('trial_type', 'chunks'),
-                                  design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
-                                  return_model=True)
+    if dstype == 'raw':
+        outdir='PyMVPA'
+        print "working with raw data"
+        thisSub = {sub: subList[sub]}
+        dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+        thisDS = dsdict[sub]
+        mc_params = lmvpa.loadmotionparams(paths, thisSub)
+        beta_events = lmvpa.loadevents(paths, thisSub)
+        # savitsky golay filtering
+        sg.sg_filter(thisDS, filterLen, filterOrd)
+        # gallant group zscores before regression.
 
-    fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
-    fds = fds[fds.targets != '0']
+        # zscore w.r.t. rest trials
+        # zscore(thisDS, param_est=('targets', ['rest']), chunks_attr='chunks')
+        # zscore entire set. if done chunk-wise, there is no double-dipping (since we leave a chunk out at a time).
+        zscore(thisDS, chunks_attr='chunks')
+        print "beta extraction"
+        ## BETA EXTRACTION ##
+        rds, events = lmvpa.amendtimings(thisDS.copy(), beta_events[sub])
+        evds = er.fit_event_hrf_model(rds, events, time_attr='time_coords',
+                                      condition_attr=('trial_type', 'chunks'),
+                                      design_kwargs={'add_regs': mc_params[sub], 'hrf_model': 'canonical'},
+                                      return_model=True)
+
+        fds = lmvpa.replacetargets(evds, contrasts, thisContrast)
+        fds = fds[fds.targets != '0']
+    else:
+        outdir=os.path.join('LSS', dstype)
+        print "loading betas"
+        fds = lmvpa.loadsubbetas(paths, sub, btype=dstype, m=roi)
+        fds.sa['targets'] = fds.sa[thisContrast]
+        zscore(fds, chunks_attr='chunks')
 
     print "searchlights"
     ## initialize classifier
@@ -85,9 +95,9 @@ def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, de
 
     if write:
         from mvpa2.base import dataset
-        map2nifti(thisDS, dataset.vstack([lres, pres])).\
+        map2nifti(fds, dataset.vstack([lres, pres])).\
             to_filename(os.path.join(
-                        paths[0], 'Maps', 'PyMVPA',
+                        paths[0], 'Maps', outdir,
                         sub + '_' + roi + '_' + thisContrast + '_cvsl.nii.gz'))
 
     del lres, pres, cvSL
@@ -98,26 +108,24 @@ def runsub(sub, thisContrast, r, roi='grayMatter', filterLen=49, filterOrd=3, de
     crossSet.chunks[pidx] = 2
     cres = sl.run_cv_sl(cvSL, crossSet.copy(deep=False))
     if write:
-        map2nifti(thisDS, cres[0]).to_filename(
-            os.path.join(paths[0], 'Maps', 'PyMVPA',
+        map2nifti(fds, cres[0]).to_filename(
+            os.path.join(paths[0], 'Maps', outdir,
                          sub + '_' + roi + '_' + (thisContrast) + '_P2L.nii.gz'))
-        map2nifti(thisDS, cres[1]).to_filename(
-            os.path.join(paths[0], 'Maps', 'PyMVPA',
+        map2nifti(fds, cres[1]).to_filename(
+            os.path.join(paths[0], 'Maps', outdir,
                          sub + '_' + roi + '_' + (thisContrast) + '_L2P.nii.gz'))
 
 
 
 def main(argv):
-    roi = 'grayMatter'
     thisContrast = None
-    debug=False
-    write=False
+    debug = False
+    write = False
     roi = 'grayMatter'
-    filterLen = 49
-    filterOrd = 3
+    dstype='raw'
     r = 4  # searchlight radius
     try:
-        opts, args = getopt.getopt(argv, "dwhm:c:r", ["mfile=", "contrast=", "debug="])
+        opts, args = getopt.getopt(argv, "dwhm:c:b:r", ["mfile=", "contrast=", "debug="])
     except getopt.GetoptError:
         print 'searchlight.py -m <maskfile> -c <contrast> '
         sys.exit(2)
@@ -138,6 +146,8 @@ def main(argv):
             write = True
         elif opt in ("-r", "--radius"):
             r = arg
+        elif opt in ("-b", "--dstype"):
+            dstype = arg
 
     if not thisContrast:
         print "not a valid contrast... exiting"
@@ -153,8 +163,8 @@ def main(argv):
         subList = {'LMVPA005': subList['LMVPA005']}
 
     for s in subList.keys():
-        runsub(sub=s, thisContrast=thisContrast, r=r, debug=debug, write=write,
-                filterLen=sg_params[0], filterOrd=sg_params[1], roi=roi)
+        runsub(sub=s, thisContrast=thisContrast, r=r, dstype=dstype, write=write,
+               filterLen=sg_params[0], filterOrd=sg_params[1], roi=roi)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
