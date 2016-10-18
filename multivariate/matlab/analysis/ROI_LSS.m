@@ -36,10 +36,7 @@ binaryMasks_nS = fMRIMaskPreparation(userOptions);
 responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_LSS('tstat'), userOptions);
 % responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_avg_semantics(), userOptions);
 % responsePatterns = fMRIDataMasking(fullBrainVols, binaryMasks_nS, betaCorrespondence_avg_syntax(), userOptions);
-% clear fullBrainVols binaryMasks_nS
-
-
-userOptions.analysisName='tstat';
+clear fullBrainVols binaryMasks_nS
 
 load(['ImageData/' userOptions.analysisName '_responsePatterns.mat'])
 
@@ -101,7 +98,7 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
     try
         load(['RDMs/' userOptions.analysisName '_RDMs.mat']);
     catch
-        RDMs = constructRDMs(responsePatterns, betaCorrespondence_LSA(), userOptions);
+        RDMs = constructRDMs(responsePatterns, betaCorrespondence_LSS('tstat'), userOptions);
     end
     sRDMs = averageRDMs_subjectSession(RDMs, 'session');
     RDMs = averageRDMs_subjectSession(RDMs, 'session', 'subject');
@@ -121,8 +118,8 @@ elseif strcmpi(userOptions.analysisType, 'RSA')
 
     for i = 1:length(Models)
         LModels(i).RDM(33:64, 33:64) = nan;
-%         LModels(i).RDM(:, 33:64) = nan;
-%         PModels(i).RDM(:, 1:32) = nan;
+    %         LModels(i).RDM(:, 33:64) = nan;
+    %         PModels(i).RDM(:, 1:32) = nan;
         PModels(i).RDM(1:32, 1:32) = nan;
         LModels(i).RDM(logical(eye(length(LModels(i).RDM)))) = 0;
         PModels(i).RDM(logical(eye(length(PModels(i).RDM)))) = 0;
