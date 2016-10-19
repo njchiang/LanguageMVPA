@@ -101,7 +101,7 @@ def loadsubbetas(p, s, btype='tstat', m="grayMatter"):
     return fds
 
 
-def loadrundata(p, s, r, m=None, c='trial_type'):
+def loadrundata(p, s, r, m=None, c=None):
     # inputs:
     # p: paths list
     # s: string representing subject ('LMVPA001')
@@ -110,9 +110,7 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
     from mvpa2.datasets import eventrelated as er
     from mvpa2.datasets.mri import fmri_dataset
     from mvpa2.datasets.sources import bids as bids
-    if isinstance(c, basestring):
-        # must be a list/tuple/array for the logic below
-        c = [c]
+
 
     # bfn = pjoin(p[0], 'data', s, 'func', 'extra', s+'_'+r+'_mc.nii.gz')
     # motion corrected and coregistered
@@ -121,10 +119,16 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
         m = pjoin(p[0], 'data', s, 'masks', s+'_'+m+'.nii.gz')
         d = fmri_dataset(bfn, chunks=int(r.split('n')[1]), mask=m)
     else:
-        d = fmri_dataset(bfn, chunks=int(r.split('n')[1]), mask=m)
+        d = fmri_dataset(bfn, chunks=int(r.split('n')[1]))
     # This line-- should be different if we're doing GLM, etc.
     efn = pjoin(p[0], 'data', s, 'func', s + '_' + r + '.tsv')
     fe = bids.load_events(efn)
+    if c is None:
+        tmpe = events2dict(fe)
+        c = tmpe.keys()
+    if isinstance(c, basestring):
+        # must be a list/tuple/array for the logic below
+        c = [c]
     for ci in c:
         e = adjustevents(fe, ci)
         d = er.assign_conditionlabels(d, e, noinfolabel='rest', label_attr=ci)
@@ -133,23 +137,37 @@ def loadrundata(p, s, r, m=None, c='trial_type'):
 
 def adjustevents(e, c='trial_type'):
         import numpy as np
-        # rounding for now, ONLY because that works for this dataset.
+        # rounding for now, ONLY because that works for this dataset. But should not round for probe
         ee = []
         for i, d in enumerate(e):
-            ee.append({'onset': np.round(d['onset']),
-                       'duration': np.round(d['duration']),
-                       'condition': d[c],
-                       'intensity': int(d['intensity'])})
+            if int(d['probe']) == 0:
+                ee.append({'onset': np.round(d['onset']),
+                           'duration': np.round(d['duration']),
+                           'condition': d[c],
+                           'intensity': int(d['intensity'])})
+            else:
+                ee.append({'onset': d['onset'],
+                           'duration': d['duration'],
+                           'condition': d[c],
+                           'intensity': int(d['intensity'])})
         return ee
 
 
 def replacetargets(d, ckey, c='trial_type'):
     import numpy as np
     if c in ckey:
-        d.sa['targets'] = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.sa['trial_type']]
+        d.sa[c] = [ckey[c][np.where(st == ckey['trial_type'])[0][0]] for st in d.sa['trial_type']]
+        d.sa['targets'] = d.sa[c]
     else:
         print "not a valid contrasts, did not do anything."
     return d
+
+
+def sortds(d, c='trial_type'):
+    ds = d.copy()
+    idx = [i[0] for i in sorted(enumerate(ds.sa[c].value), key=lambda x: x[1])]
+    ds = d[idx, :]
+    return ds
 
 
 def loadevents(p, s):
@@ -164,7 +182,7 @@ def loadevents(p, s):
     return fds
 
 
-def loadsubdata(p, s, m=None, c='trial_type'):
+def loadsubdata(p, s, m=None, c=None):
     from mvpa2.base import dataset
     fds = {}
     for sub in s.keys():

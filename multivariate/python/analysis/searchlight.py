@@ -49,7 +49,7 @@ def runsub(sub, thisContrast, r, dstype='raw', roi='grayMatter', filterLen=49, f
         outdir='PyMVPA'
         print "working with raw data"
         thisSub = {sub: subList[sub]}
-        dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi, c='trial_type')
+        dsdict = lmvpa.loadsubdata(paths, thisSub, m=roi)
         thisDS = dsdict[sub]
         mc_params = lmvpa.loadmotionparams(paths, thisSub)
         beta_events = lmvpa.loadevents(paths, thisSub)
@@ -78,6 +78,7 @@ def runsub(sub, thisContrast, r, dstype='raw', roi='grayMatter', filterLen=49, f
         fds.sa['targets'] = fds.sa[thisContrast]
         zscore(fds, chunks_attr='chunks')
 
+    fds = lmvpa.sortds(fds)
     print "searchlights"
     ## initialize classifier
     clf = svm.LinearNuSVMC()
