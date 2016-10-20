@@ -1,4 +1,4 @@
-function betas = betaCorrespondence_LSA()
+function betas = betaCorrespondence_LSA(type)
 %
 %  betaCorrespondence.m is a simple function which should combine
 %  three things: preBeta:	a string which is at the start of each file
@@ -24,6 +24,11 @@ function betas = betaCorrespondence_LSA()
 %__________________________________________________________________________
 % Copyright (C) 2010 Medical Research Council
 
+if nargin < 1
+    type='';
+else
+    type = ['_' type];
+end
 preBeta = '';
 
 % betas(session, condition).identifier = ???
@@ -106,7 +111,7 @@ end
 % betas(1,7).identifier = 'session1_condition7';
 % betas(1,8).identifier = 'session1_condition8';
 
-postBeta = '.img';
+postBeta = [type '.img'];
 
 for session = 1:size(betas,1)
 	for condition = 1:size(betas,2)

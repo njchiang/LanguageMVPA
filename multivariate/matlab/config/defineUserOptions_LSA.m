@@ -26,7 +26,7 @@ userOptions.rootPath=pwd;
 % The path leading to where the scans are stored (not including subject-specific identifiers).
 % "[[subjectName]]" should be used as a placeholder to denote an entry in userOptions.subjectNames
 % "[[betaIdentifier]]" should be used as a placeholder to denote an output of betaCorrespondence.m if SPM is not being used; or an arbitrary filename if SPM is being used.
-userOptions.betaPath = [userOptions.rootPath '/data/betas/LSA/[[subjectName]]_[[betaIdentifier]]'];% e.g. /imaging/mb01/lexpro/multivariate/ffx_simple/[[subjectName]]/[[betaIdentifier]]
+userOptions.betaPath = [userOptions.rootPath '/betas/LSA/[[subjectName]]_[[betaIdentifier]]'];% e.g. /imaging/mb01/lexpro/multivariate/ffx_simple/[[subjectName]]/[[betaIdentifier]]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FEATUERS OF INTEREST SELECTION OPTIONS %%
@@ -39,7 +39,7 @@ userOptions.betaPath = [userOptions.rootPath '/data/betas/LSA/[[subjectName]]_[[
 % The path to a stereotypical mask data file is stored (not including subject-specific identifiers).
 % "[[subjectName]]" should be used as a placeholder to denote an entry in userOptions.subjectNames
 % "[[maskName]]" should be used as a placeholder to denote an entry in userOptions.maskNames
-userOptions.maskPath = [userOptions.rootPath '/data/masks/3mm_[[maskName]].img'];%'/imaging/mb01/lexpro/multivariate/ffx_simple/[[subjectName]]/[[maskName]].img';
+userOptions.maskPath = [userOptions.rootPath '/data/[[subjectName]]/masks/ANALYZE/[[subjectName]]_[[maskName]].img'];%'/imaging/mb01/lexpro/multivariate/ffx_simple/[[subjectName]]/[[maskName]].img';
 
 % The list of mask filenames (minus .hdr extension) to be used.
 userOptions.maskNames = { ...
@@ -93,7 +93,7 @@ userOptions.maskNames = { ...
 % userOptions.structuralsPath = [userOptions.rootPath '/data/MNI152_T1_3mm'];% e.g. /imaging/mb01/lexpro/[[subjectName]]/structurals/
 
 % What are the dimensions (in mm) of the voxels in the scans?
-userOptions.voxelSize = [3 3 3.75];
+userOptions.voxelSize = [3 3 3];
 
 % What radius of searchlight should be used (mm)?
 userOptions.searchlightRadius = 12;

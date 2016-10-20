@@ -81,12 +81,12 @@ def initpaths(platform):
 
 ######################################
 # load data
-def loadsubbetas(p, s, btype='tstat', m="grayMatter"):
+def loadsubbetas(p, s, btype='tstat', method="LSS", m="grayMatter"):
     # load subject data with paths list, s: sub, c: contrast, m: mask
     print s
     import os
     bsp = os.path.join(p[0], "data", s, "func")
-    bsn = str(s + "_LSS_" + btype + ".nii.gz")
+    bsn = str(s + "_" + method + "_" + btype + ".nii.gz")
     bs = os.path.join(bsp, bsn)
     mnp = os.path.join(p[0], "data", s, "masks")
     mn = str(s + "_" + m + ".nii.gz")
@@ -94,7 +94,7 @@ def loadsubbetas(p, s, btype='tstat', m="grayMatter"):
     from mvpa2.datasets.mri import fmri_dataset
     fds = fmri_dataset(samples=bs, mask=mf)
     import pandas as pd
-    attrs = pd.read_csv(os.path.join(bsp, str(s+"_LSS_betas.tsv")), sep='\t')
+    attrs = pd.read_csv(os.path.join(bsp, str(s + "_" + method + "_betas.tsv")), sep='\t')
     fds.sa['chunks'] = attrs['run'].tolist()
     for c in attrs.keys():
         fds.sa[c] = attrs[c].tolist()
