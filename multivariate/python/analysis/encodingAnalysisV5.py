@@ -28,7 +28,6 @@ import numpy as np
 import logging
 import getopt
 from mvpa2.base import dataset
-from nipy.modalities.fmri.design_matrix import make_dmtx
 import sys
 # initialize stuff
 if sys.platform == 'darwin':

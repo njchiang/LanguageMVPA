@@ -159,7 +159,7 @@ def main(argv):
     print "Full Model: " + str(thisContrast)
     print "Searchlight Radius: " + str(r)
     print "Write results: " + str(write)
-    sg_params = [49, 2]
+    sg_params = [63, 2]
     if debug:
         subList = {'LMVPA005': subList['LMVPA005']}
 
